@@ -1,11 +1,11 @@
 ---
 name: finalize
-description: The /finalize command. Runs the full post-implementation finalization pipeline on a completed code change — language best-practices, simplify, refactor assessment, code review, security review, doc updates, lint/type/test gates, and a final validation gate that returns a READY TO SHIP / NEEDS REVISION / BLOCKED verdict. Invoke ONLY when the user explicitly runs the /finalize command. Do NOT auto-trigger from related phrasing such as "finish this", "wrap up", "clean this up", or "ready to commit", and never during ordinary coding, debugging, or review tasks.
+description: The /finalize command. Runs the full post-implementation finalization pipeline on a completed code change — language best-practices, simplify, refactor assessment, code review, security review, spec-conformance check, doc updates, lint/type/test gates, and a final validation gate that returns a READY TO SHIP / NEEDS REVISION / BLOCKED verdict. Invoke ONLY when the user explicitly runs the /finalize command. Do NOT auto-trigger from related phrasing such as "finish this", "wrap up", "clean this up", or "ready to commit", and never during ordinary coding, debugging, or review tasks.
 ---
 
 # Finalize
 
-`/finalize` is the quality-assurance pipeline a developer runs once a change is *functionally complete* and they want it brought up to shippable standard. It is an **orchestrator**: where a capability already exists as a command (`/code-review`, `/security-review`, `/verify`, `/simplify`), finalize delegates to it instead of re-implementing it. It only carries its own instructions for the gaps — language best-practices, refactor assessment, doc updates, and the final validation gate. Crucially, **`/finalize` never commits, pushes, or opens a pull request** — it stops at a verdict and a summary, and every git action stays in your hands.
+`/finalize` is the quality-assurance pipeline a developer runs once a change is *functionally complete* and they want it brought up to shippable standard. It is an **orchestrator**: where a capability already exists as a command (`/code-review`, `/security-review`, `/verify`, `/simplify`), finalize delegates to it instead of re-implementing it. It only carries its own instructions for the gaps — language best-practices, refactor assessment, spec-conformance, doc updates, and the final validation gate. Crucially, **`/finalize` never commits, pushes, or opens a pull request** — it stops at a verdict and a summary, and every git action stays in your hands.
 
 The pipeline is ordered so that **code-modifying phases run first against a known-good baseline, and verification + sign-off run last** — you never declare something shippable that you changed after you last confirmed it works.
 
@@ -21,6 +21,8 @@ Read these before starting. They explain *why* the pipeline is shaped the way it
 - **Never commit — the user owns git.** This pipeline ends at the validation verdict and a summary. Do not run `git commit`, `git push`, `gh pr create`, or any other git/PR write — ever, under any circumstances, even when the verdict is READY TO SHIP and even if asked to "just wrap it up". Staging and committing is the user's decision alone; you may only *suggest* the exact command for them to run. (Consequence: since the modifying phases edit the working tree in place but nothing is committed, the user's own pre-finalize commit is the only clean rollback point — hence the Phase 0 commit precondition.)
 - **Be convention-aware.** Read `CLAUDE.md` / `AGENTS.md` and existing code style before applying any "best practice". Project conventions win over generic rules — note the conflict rather than overriding silently.
 - **Fit the codebase, not just correctness.** A change can be locally correct yet wrong for *this* repo — duplicating an existing helper, adding a second way to do something, or ignoring an established pattern. Reuse prior art and match surrounding conventions; see `references/codebase-fit.md`.
+- **Build the right change, not just a correct one.** Code can be clean, idiomatic, and correct yet not be *what was asked for* — a requirement left half-built, a misread of the spec, or behavior nobody requested. Conformance to the originating intent is its own check, distinct from quality; see `references/spec-conformance.md`.
+- **A finding blocks only if it survives challenge.** Before any issue gates the verdict, it must have a concrete, reachable trigger — not a theory or an aesthetic objection. Challenging your own findings keeps the punch list small and trustworthy, so the user doesn't have to re-verify it by hand; see `references/finding-verification.md`.
 - **Check current library docs when unsure.** Training data drifts and APIs change. When the change uses a library or framework and you're not certain an API is current, non-deprecated, and used the way maintainers now recommend, consult docs rather than memory — if a documentation MCP such as **Context7** is available, resolve the library and query the specific topic. If none is available, say so and lower your confidence instead of guessing. Most relevant in Phases 1, 4, and 7.
 
 ## Setup
@@ -40,9 +42,10 @@ Establish exactly what you are finalizing and confirm it starts from a known-goo
 3. **Compute the diff.** `git diff <base>...HEAD` for committed work, plus `git status` / `git diff` for uncommitted work. This combined diff is your source of truth for every later phase.
 4. **Detect languages & frameworks** from changed file extensions and manifests (`package.json`, `composer.json`, `pyproject.toml`, `*.csproj`, etc.). This decides which best-practices references load in Phase 1.
 5. **Read conventions:** root and nearest `CLAUDE.md` / `AGENTS.md`, plus linter/formatter config, so later phases respect house style.
-6. **Confirm a green baseline.** Run the test suite once now. If it is already failing *before* finalize touches anything, stop and report — finalize is not the tool to debug a broken baseline, and you must not mask pre-existing failures as if finalize caused or fixed them.
+6. **Pin the spec/intent.** Establish *what this change was supposed to do* so Phase 4 can check the diff against it. Follow `references/spec-conformance.md`: look for issue refs in commit messages (`#123`, `Closes #45` → `gh issue view` if available), then a PRD/spec file under `docs/`/`specs/`/`.scratch/` matching the branch/feature, then the branch name as a weak hint. If none of those turn up, ask the user once for a one-line intent or a path. If they have none either, record "no external spec; internal-consistency check only" and proceed — never block on a missing spec. Carry the pinned intent (and its source) forward.
+7. **Confirm a green baseline.** Run the test suite once now. If it is already failing *before* finalize touches anything, stop and report — finalize is not the tool to debug a broken baseline, and you must not mask pre-existing failures as if finalize caused or fixed them.
 
-Gate: you have a clear diff, a language list, and a green (or explicitly-acknowledged) starting state.
+Gate: you have a clear diff, a language list, a pinned intent (or an explicit note that none exists), and a green (or explicitly-acknowledged) starting state.
 
 ### Phase 1 — Best-practices pass *(modifies code)*
 
@@ -83,10 +86,12 @@ Independently review the now-polished diff. These checks are read-only and indep
 - **Secret scan:** scan the diff for committed secrets, credentials, tokens, private keys, or `.env` values. Any hit is a hard stop — never let secrets proceed toward a commit.
 - **Dependency & license audit** *(only if the diff changed dependency manifests/lockfiles)*: follow `references/dependency-audit.md` — check new/bumped dependencies for known vulnerabilities, license compatibility, and supply-chain hygiene. Skip with a note if no dependencies changed.
 - **Consistency & codebase fit:** per `references/codebase-fit.md`, check the change fits the existing architecture — reuses prior art, matches established patterns, doesn't duplicate existing functionality or introduce a competing pattern, and respects module boundaries. Flag divergences as findings.
+- **Spec conformance:** per `references/spec-conformance.md`, check the diff against the intent pinned in Phase 0 — missing or partial requirements, scope creep (behavior nobody asked for), and implemented-but-wrong. If no external spec was pinned, run the lighter internal-consistency check instead (half-built paths, dead branches, leftover scaffolding). A confirmed missing requirement is blocking; `/finalize` flags it but does not implement it.
+- **Structural regression:** per the diff-scoped lane in `references/refactoring.md`, check whether *this change* degraded structure — ad-hoc branching tangled into an unrelated flow, feature logic leaking into a general module, file bloat, a duplicated canonical helper, or a boundary leak. Diff-scoped only: flag degradation the change caused; do not flag or rewrite untouched neighboring code.
 
-Consolidate findings by severity. Fix anything blocking now (a fix re-opens Phase 6 verification for the touched code). Record non-blocking items in the final report.
+Consolidate the lanes into one punch list. **Before marking anything blocking, run it through `references/finding-verification.md`** — require a concrete reachable trigger, downgrade known false-positive classes, and verify any framework/library claim against docs. Label each surviving finding with severity and confidence, and order by business impact. Fix anything blocking now (a fix re-opens Phase 6 verification for the touched code). Record non-blocking items in the final report.
 
-Gate: no blocking review, security, dependency, or consistency findings remain; no secrets in the diff.
+Gate: no blocking review, security, dependency, consistency, spec-conformance, or structural findings remain; no secrets in the diff. Blocking findings are verified (reproducible trigger), not speculative.
 
 ### Phase 5 — Update docs *(modifies docs)*
 
@@ -112,7 +117,8 @@ Gate: lint/format/type-check clean, tests green, the feature observably works, a
 
 Apply the critical, structured validation review to the final diff and produce a verdict.
 
-- Follow `references/validation-gate.md` exactly — it is an 11-section checklist plus a required final risk pass. Reason about each item against the diff and the evidence gathered in Phase 6; flag issues rather than assuming correctness.
+- Follow `references/validation-gate.md` exactly — it is a 12-section checklist (including business-risk lanes for data integrity, idempotency/concurrency, and financial correctness) plus a required final risk pass. Reason about each item against the diff and the evidence gathered in Phase 6; flag issues rather than assuming correctness.
+- Apply the same `references/finding-verification.md` discipline as Phase 4: anything that pushes the verdict to `NEEDS REVISION`/`BLOCKED` needs a concrete reachable trigger, every finding carries a severity + confidence label, and findings are ordered by business impact. Fold in the Phase 4 spec-conformance result — a confirmed missing requirement is `NEEDS REVISION`.
 - The gate ends in one verdict: **READY TO SHIP**, **NEEDS REVISION**, or **BLOCKED**, with a short justification.
 
 Gate: a verdict is produced. `BLOCKED` or `NEEDS REVISION` means the change is *not* presented as shippable — surface what must be fixed.
@@ -166,8 +172,10 @@ Do not commit, push, or open a PR. If the verdict is READY TO SHIP, you may sugg
 | `references/best-practices/frontend-a11y-i18n.md` | Phase 1 (+6) | Accessibility & i18n for UI changes |
 | `references/testing.md` | Phase 1 (+6) | Test-quality discipline (behavior over implementation, determinism, mocking) |
 | `references/codebase-fit.md` | Phase 1 (+4) | Reuse prior art, match patterns, respect boundaries — fit the change to the repo |
-| `references/refactoring.md` | Phase 3 | Refactor priority model & behavior-preservation discipline |
+| `references/spec-conformance.md` | Phase 0 (+4) | Pin the originating intent; check the diff for missing requirements, scope creep, wrong implementation |
+| `references/refactoring.md` | Phase 3 (+4) | Refactor priority model, behavior-preservation discipline & the diff-scoped structural-regression lane |
 | `references/dependency-audit.md` | Phase 4 | Vulnerability, license & supply-chain audit for changed deps |
+| `references/finding-verification.md` | Phase 4 (+7) | Trigger test, known-false-positive exclusions & confidence/severity labels — keep the blocking list true |
 | `references/update-docs.md` | Phase 5 | What docs to update and how |
 | `references/performance-profiling.md` | Phase 6 | Measure-first profiling for hot-path changes |
-| `references/validation-gate.md` | Phase 7 | 11-section validation checklist + verdict |
+| `references/validation-gate.md` | Phase 7 | 12-section validation checklist (incl. business-risk lanes) + verdict |

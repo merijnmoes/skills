@@ -1,6 +1,6 @@
 # Refactor assessment
 
-Phase 3 of `/finalize`. Assess the changed code for structural problems and fix ONLY those that genuinely improve it. Many changes need no refactor at all — don't manufacture work to look thorough. Applies to the changed code in the diff, not the whole repo. Project conventions in CLAUDE.md always override these rules.
+Phase 3 of `/finalize` (fix structural problems) and the structural-regression lane of Phase 4 (flag them, read-only). Assess the changed code for structural problems and, in Phase 3, fix ONLY those that genuinely improve it. Many changes need no refactor at all — don't manufacture work to look thorough. Applies to the changed code in the diff, not the whole repo. Project conventions in CLAUDE.md always override these rules.
 
 ## The discipline (non-negotiable)
 Refactoring preserves behavior. It changes structure — never what the code does. The two are separate activities; mixing them hides bugs.
@@ -44,6 +44,21 @@ Three heuristics for judging whether an abstraction earns its place — and whet
 - **Prefer deep modules.** A module earns its keep by hiding real complexity behind a small interface. A *shallow* module — whose interface is about as large as its implementation — is mostly indirection: it adds a hop without hiding anything. When a change introduces a wrapper or layer, check it actually hides complexity rather than just forwarding calls.
 - **The deletion test.** Imagine deleting the abstraction. If the complexity simply vanishes, it was a pass-through — inline it. If the complexity reappears, duplicated across several callers, it was doing real work — keep it. This separates indirection-worth-removing from duplication-worth-abstracting without guessing.
 - **One adapter is a hypothetical seam; two are a real one.** Don't introduce an interface/port for an *imagined* second implementation — that's speculative flexibility (YAGNI, see above). Add the seam when the second real implementation actually arrives; until then the concrete dependency reads clearer.
+
+## Structural regression (diff-scoped) — the Phase 4 lane
+Separate from "is there a pre-existing smell worth fixing" (above), ask the sharper question: **did *this change* leave the structure worse than it found it?** A diff can be locally correct and still degrade the codebase. Flag these as findings:
+
+- **Ad-hoc branching tangled into an unrelated flow** — a feature-specific `if`/special-case bolted onto a general code path that didn't need to know about this feature. The logic belongs in its own abstraction, not woven through a shared path.
+- **Feature logic leaking into a general-purpose module** — a generic utility/helper/base class that now contains knowledge of a specific feature or caller. General code should not depend on its specific consumers.
+- **File bloat from the change** — the change pushed a file well past a coherent size (a rough flag: crossing ~1,000 lines, or growing a file that was already too large) instead of extracting the new behavior into a focused unit. Judge it against where the file *should* have split, not an absolute line count.
+- **Canonical helper duplicated** — the change reimplements something the repo already has one home for, instead of reusing it (ties to `codebase-fit.md`). A second near-copy is a future divergence bug.
+- **Boundary leak** — persistence/transport/framework types crossing a layer the project keeps clean, or a shortcut import across a maintained module boundary (ties to `best-practices/general-oop.md` and `codebase-fit.md`).
+- **Magic obscuring simple structure** — clever indirection, reflection, or over-generalization the change introduced where a direct, plain implementation would read clearer.
+
+**The tempering — read this so the lane doesn't overreach.** This is the *restrained* version of an aggressive structural review, deliberately scoped to fit `/finalize`:
+- It is **diff-scoped**. Judge the structure the change touched or added. Do **not** flag (or rewrite) untouched code that merely happens to be near the diff — that is scope creep and a common way to introduce regressions.
+- **Behavior preservation and minimality still govern.** The point is to catch *degradation the change caused*, not to mandate ambitious rewrites or treat "I can imagine a cleaner architecture" as a blocker. "Design over working code" is explicitly **not** finalize's posture.
+- A structural-regression finding **blocks only if it survives `references/finding-verification.md`** — name the concrete maintenance hazard (the future bug, the path that's now hard to change safely), not an aesthetic preference. Clear, low-risk regressions can be fixed in Phase 3; the rest are flagged with severity and confidence and left for the user.
 
 ## Assessment output
 Produce a short assessment, not a wall of text. List each candidate with its **priority** (Critical/High/Nice/Skip), a **DECISION** (fix now / defer / skip), and a one-line reason. Then act only on the "fix now" items.
