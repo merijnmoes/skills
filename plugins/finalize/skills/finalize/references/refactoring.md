@@ -39,6 +39,12 @@ Each: what it is → the fix.
 - **Dead code** — unreachable or unused branches, vars, params → delete it; version control remembers.
 - **Inappropriate intimacy** — two classes entangled in each other's internals → reduce coupling via a clear interface or by relocating behavior.
 
+## Module depth & the deletion test
+Three heuristics for judging whether an abstraction earns its place — and whether a change should add one:
+- **Prefer deep modules.** A module earns its keep by hiding real complexity behind a small interface. A *shallow* module — whose interface is about as large as its implementation — is mostly indirection: it adds a hop without hiding anything. When a change introduces a wrapper or layer, check it actually hides complexity rather than just forwarding calls.
+- **The deletion test.** Imagine deleting the abstraction. If the complexity simply vanishes, it was a pass-through — inline it. If the complexity reappears, duplicated across several callers, it was doing real work — keep it. This separates indirection-worth-removing from duplication-worth-abstracting without guessing.
+- **One adapter is a hypothetical seam; two are a real one.** Don't introduce an interface/port for an *imagined* second implementation — that's speculative flexibility (YAGNI, see above). Add the seam when the second real implementation actually arrives; until then the concrete dependency reads clearer.
+
 ## Assessment output
 Produce a short assessment, not a wall of text. List each candidate with its **priority** (Critical/High/Nice/Skip), a **DECISION** (fix now / defer / skip), and a one-line reason. Then act only on the "fix now" items.
 

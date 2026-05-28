@@ -162,6 +162,7 @@ Do not commit, push, or open a PR. If the verdict is READY TO SHIP, you may sugg
 | `references/best-practices/vue.md` | Phase 1 | Vue 3 / Composition API idioms |
 | `references/best-practices/sql.md` | Phase 1 | Cross-engine SQL query & index optimization |
 | `references/best-practices/postgresql.md` | Phase 1 | PostgreSQL + ORM (TypeORM/Prisma) patterns |
+| `references/best-practices/supabase.md` | Phase 1 | Supabase RLS/auth, roles, pooling (layers on postgresql/sql) |
 | `references/best-practices/frontend-a11y-i18n.md` | Phase 1 (+6) | Accessibility & i18n for UI changes |
 | `references/testing.md` | Phase 1 (+6) | Test-quality discipline (behavior over implementation, determinism, mocking) |
 | `references/codebase-fit.md` | Phase 1 (+4) | Reuse prior art, match patterns, respect boundaries — fit the change to the repo |

@@ -15,6 +15,7 @@ Phase 1 of `/finalize` loads only the best-practices files relevant to what chan
 | `.vue`, or Vue in `package.json` deps | `vue.md` + `typescript.md` + `javascript.md` |
 | `.sql`, raw queries, query builders (any engine) | `sql.md` |
 | PostgreSQL entities/migrations, TypeORM/Prisma, RLS | `postgresql.md` (+ `sql.md` for query tuning) |
+| Supabase project (`@supabase/supabase-js` in deps, a `supabase/` dir, or `auth.uid()`/`auth.*` in SQL/migrations) | `supabase.md` (+ `postgresql.md` + `sql.md`) |
 | Any UI / markup change (HTML, JSX/TSX, `.vue`, `.svelte`, templates, components, CSS) | `frontend-a11y-i18n.md` |
 
 ## Notes
