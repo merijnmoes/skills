@@ -1,0 +1,15 @@
+{
+  "name": "merijn-skills",
+  "owner": {
+    "name": "Merijn Moes",
+    "email": "25085544+MerijnMoes@users.noreply.github.com"
+  },
+  "description": "Merijn's personal collection of Claude Code skills.",
+  "plugins": [
+    {
+      "name": "finalize",
+      "source": "./plugins/finalize",
+      "description": "Post-implementation finalization pipeline — language best-practices, simplify, refactor assessment, code/security review, dependency audit, doc updates, lint/type/test gates, and a final READY TO SHIP / NEEDS REVISION / BLOCKED verdict. Never commits."
+    }
+  ]
+}
