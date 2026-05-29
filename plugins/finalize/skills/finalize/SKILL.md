@@ -5,7 +5,7 @@ description: The /finalize command. Runs the full post-implementation finalizati
 
 # Finalize
 
-`/finalize` is the quality-assurance pipeline a developer runs once a change is *functionally complete* and they want it brought up to shippable standard. It is an **orchestrator**: where an *independent check* already exists as a command (`/code-review`, `/security-review`, `/verify`), finalize delegates to it instead of re-implementing it. It carries its own instructions for the *improve* work and the remaining gaps — language best-practices, simplification, refactor assessment, spec-conformance, doc updates, and the final validation gate. (`/simplify` is not in the delegated set: it is just `/code-review --fix`, not a distinct simplifier, so Phase 2 owns its own guidance.) Crucially, **`/finalize` never commits, pushes, or opens a pull request** — it stops at a verdict and a summary, and every git action stays in your hands.
+`/finalize` is the quality-assurance pipeline a developer runs once a change is *functionally complete* and they want it brought up to shippable standard. It is a **self-contained orchestrator**: it carries its own instructions for every phase — the *improve* work (language best-practices, simplification, refactor assessment) and the audit, verification, and remaining gaps (code review, security review, behavioral verification, spec-conformance, doc updates, and the final validation gate) — and depends on no host-agent built-in commands. The independent audit checks (code review and security review) run in fresh-context subagents that follow the skill's own references; behavioral verification runs in the main agent. Crucially, **`/finalize` never commits, pushes, or opens a pull request** — it stops at a verdict and a summary, and every git action stays in your hands.
 
 The pipeline is ordered so that **code-modifying phases run first against a known-good baseline, and verification + sign-off run last** — you never declare something shippable that you changed after you last confirmed it works.
 
@@ -14,7 +14,7 @@ The pipeline is ordered so that **code-modifying phases run first against a know
 Read these before starting. They explain *why* the pipeline is shaped the way it is, so you can handle situations the phase list doesn't spell out.
 
 - **The diff is the unit of work.** Everything operates on what changed versus the base branch (plus uncommitted work) — not the whole repo. Reviewing or "improving" untouched code is scope creep and a common way to introduce regressions. The one exception is reading surrounding code to *understand* a change.
-- **Delegate, don't duplicate.** The improve phases (1–3: best-practices, simplify, refactor) carry their own guidance, because *making code better* is the value this skill adds and there is no single built-in that does it the way the pipeline needs. The audit/verify phases delegate to independent built-ins (`/code-review`, `/security-review`, `/verify`), because *independently checking* the result is exactly what those tools are for and re-deriving their logic here would rot. (Note `/simplify` is itself `/code-review --fix`, not a distinct simplifier — which is why Phase 2 owns its guidance rather than delegating, and Phase 4's `/code-review` then acts as an independent read-only check that Phases 1–3 did their job.)
+- **Own your checks; get independence from fresh context, not from host commands.** Every phase carries its own guidance — the *improve* phases (1–3) and the *audit* and *verify* phases alike — so the pipeline depends on no host-agent built-in commands and travels wherever the skill is installed. The audit's independence comes from running the code-review and security-review references in a **fresh-context subagent** (see the `dispatching-parallel-agents` skill) that hasn't seen Phases 1–3; where a host has no subagent mechanism, follow the same reference as an inline adversarial pass. Verify (Phase 6) is a main-agent procedure following `verify.md`, because behavioral observation benefits from holding the change's intent.
 - **Never skip a phase to save time.** "The session was already long", "the diff is small", "a previous phase was thorough", "this is urgent" are never reasons to skip. The point of a finalize pass is that it is *complete and predictable*. If a phase genuinely does not apply (e.g. no SQL in the diff → no SQL best-practices), state that explicitly and move on — that is judgement, not skipping.
 - **Behavior preservation is sacred in the improvement phases.** Best-practices, simplify, and refactor must not change what the code *does*. The test suite (Phase 6) is the safety net that proves it — which is why those phases come before, not after, verification.
 - **Fail-stop, don't paper over.** If a modifying or audit phase hits an error it cannot cleanly resolve, stop the pipeline and report where you are. Do not silently continue or mask failures.
@@ -82,8 +82,8 @@ Gate: structural issues are either fixed (with tests still green) or consciously
 
 Independently review the now-polished diff. These checks are read-only and independent, so run them in parallel where possible (dispatch parallel subagents — see the `dispatching-parallel-agents` skill) and consolidate their findings into one punch list.
 
-- **Code review:** invoke **`/code-review`** on the diff.
-- **Security review:** invoke **`/security-review`** on the pending changes.
+- **Code review:** dispatch a fresh-context subagent (per the `dispatching-parallel-agents` skill) to review the diff following `references/code-review.md`. On a host without subagents, follow that reference as an inline adversarial pass.
+- **Security review:** dispatch a fresh-context subagent to audit the diff following `references/security-review.md` (OWASP Top 10:2025 floor + conditional API & LLM lenses). Inline-adversarial fallback as above.
 - **Secret scan:** scan the diff for committed secrets, credentials, tokens, private keys, or `.env` values. Any hit is a hard stop — never let secrets proceed toward a commit.
 - **Dependency & license audit** *(only if the diff changed dependency manifests/lockfiles)*: follow `references/dependency-audit.md` — check new/bumped dependencies for known vulnerabilities, license compatibility, and supply-chain hygiene. Skip with a note if no dependencies changed.
 - **Consistency & codebase fit:** per `references/codebase-fit.md`, check the change fits the existing architecture — reuses prior art, matches established patterns, doesn't duplicate existing functionality or introduce a competing pattern, and respects module boundaries. Flag divergences as findings.
@@ -108,7 +108,7 @@ Gather hard evidence that the change works after all the modifications above. Th
 
 1. **Static gates:** run the project's formatter, linter, and type-checker (detected in Phase 0). These are cheap and catch more than human review.
 2. **Test suite:** run the full suite. It must pass. Confirm that new functionality is actually covered by tests — if a new code path has no test, that is a finding for the validation gate. Also assess the *quality* of new/changed tests against `references/testing.md` — they should test behavior not implementation, avoid over-mocking, and be deterministic; a brittle, order-dependent, or vacuous (asserts-nothing) test is itself a finding, since green-but-meaningless tests are false confidence.
-3. **Behavioral check:** delegate to **`/verify`** to actually run the app/feature and observe real behavior, not just green tests. Type-checks and tests prove code correctness, not feature correctness.
+3. **Behavioral check:** follow **`references/verify.md`** to actually run the app/feature and observe real behavior, not just green tests. Type-checks and tests prove code correctness, not feature correctness.
 4. **Accessibility check** *(only for UI changes)*: verify the a11y rules from `references/best-practices/frontend-a11y-i18n.md` actually hold — a keyboard pass plus an automated checker (e.g. axe), not just code inspection.
 5. **Performance profiling** *(only if the change touches a hot path / performance-sensitive code)*: follow `references/performance-profiling.md` — measure against realistic data, find the real bottleneck, confirm any optimization with a before/after. Skip with a note for cold-path changes.
 
@@ -176,8 +176,11 @@ Do not commit, push, or open a PR. If the verdict is READY TO SHIP, you may sugg
 | `references/codebase-fit.md` | Phase 1 (+4) | Reuse prior art, match patterns, respect boundaries — fit the change to the repo |
 | `references/spec-conformance.md` | Phase 0 (+4) | Pin the originating intent; check the diff for missing requirements, scope creep, wrong implementation |
 | `references/refactoring.md` | Phase 3 (+4) | Refactor priority model, behavior-preservation discipline & the diff-scoped structural-regression lane |
+| `references/code-review.md` | Phase 4 | Correctness/bug review of the diff (logic, edges, error paths, concurrency, resource leaks, API misuse) |
+| `references/security-review.md` | Phase 4 | Security audit — OWASP Top 10:2025 floor + conditional API & LLM lenses; composes dependency-audit & finding-verification |
 | `references/dependency-audit.md` | Phase 4 | Vulnerability, license & supply-chain audit for changed deps |
 | `references/finding-verification.md` | Phase 4 (+7) | Trigger test, known-false-positive exclusions & confidence/severity labels — keep the blocking list true |
 | `references/update-docs.md` | Phase 5 | What docs to update and how |
+| `references/verify.md` | Phase 6 | Behavioral verification — run the app & observe; composes testing, a11y & performance refs |
 | `references/performance-profiling.md` | Phase 6 | Measure-first profiling for hot-path changes |
 | `references/validation-gate.md` | Phase 7 | 12-section validation checklist (incl. business-risk lanes) + verdict |
