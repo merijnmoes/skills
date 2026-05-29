@@ -78,7 +78,7 @@ Assess whether the changed code has structural problems worth fixing *now*, and 
 
 Gate: structural issues are either fixed (with tests still green) or consciously deferred with a reason.
 
-### Phase 4 — Audit *(read-only)*
+### Phase 4 — Audit *(read-only review; fixes applied after consolidation)*
 
 Independently review the now-polished diff. These checks are read-only and independent, so run them in parallel where possible (dispatch parallel subagents — see the `dispatching-parallel-agents` skill) and consolidate their findings into one punch list.
 

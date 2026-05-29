@@ -68,14 +68,14 @@ Use `Protocol` for structural typing when you want "anything with these methods"
 ## Validation with Pydantic
 
 ```python
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field, field_validator
 
 class User(BaseModel):
     id: int
     username: str = Field(min_length=3, max_length=50)
     email: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     tags: list[str] = Field(default_factory=list)   # not a bare [] default
 
     @field_validator("email")
