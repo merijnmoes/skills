@@ -1,8 +1,7 @@
 {
   "name": "merijn-skills",
   "owner": {
-    "name": "Merijn Moes",
-    "email": "25085544+MerijnMoes@users.noreply.github.com"
+    "name": "Merijn Moes"
   },
   "description": "Merijn's personal collection of Claude Code skills.",
   "plugins": [
