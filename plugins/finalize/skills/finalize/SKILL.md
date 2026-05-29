@@ -5,7 +5,7 @@ description: The /finalize command. Runs the full post-implementation finalizati
 
 # Finalize
 
-`/finalize` is the quality-assurance pipeline a developer runs once a change is *functionally complete* and they want it brought up to shippable standard. It is an **orchestrator**: where a capability already exists as a command (`/code-review`, `/security-review`, `/verify`, `/simplify`), finalize delegates to it instead of re-implementing it. It only carries its own instructions for the gaps — language best-practices, refactor assessment, spec-conformance, doc updates, and the final validation gate. Crucially, **`/finalize` never commits, pushes, or opens a pull request** — it stops at a verdict and a summary, and every git action stays in your hands.
+`/finalize` is the quality-assurance pipeline a developer runs once a change is *functionally complete* and they want it brought up to shippable standard. It is an **orchestrator**: where an *independent check* already exists as a command (`/code-review`, `/security-review`, `/verify`), finalize delegates to it instead of re-implementing it. It carries its own instructions for the *improve* work and the remaining gaps — language best-practices, simplification, refactor assessment, spec-conformance, doc updates, and the final validation gate. (`/simplify` is not in the delegated set: it is just `/code-review --fix`, not a distinct simplifier, so Phase 2 owns its own guidance.) Crucially, **`/finalize` never commits, pushes, or opens a pull request** — it stops at a verdict and a summary, and every git action stays in your hands.
 
 The pipeline is ordered so that **code-modifying phases run first against a known-good baseline, and verification + sign-off run last** — you never declare something shippable that you changed after you last confirmed it works.
 
@@ -14,7 +14,7 @@ The pipeline is ordered so that **code-modifying phases run first against a know
 Read these before starting. They explain *why* the pipeline is shaped the way it is, so you can handle situations the phase list doesn't spell out.
 
 - **The diff is the unit of work.** Everything operates on what changed versus the base branch (plus uncommitted work) — not the whole repo. Reviewing or "improving" untouched code is scope creep and a common way to introduce regressions. The one exception is reading surrounding code to *understand* a change.
-- **Delegate, don't duplicate.** When a phase maps to an existing command, invoke that command. Re-explaining its logic here would rot. This skill's value is the *ordering and the gates*, not re-derived checklists.
+- **Delegate, don't duplicate.** The improve phases (1–3: best-practices, simplify, refactor) carry their own guidance, because *making code better* is the value this skill adds and there is no single built-in that does it the way the pipeline needs. The audit/verify phases delegate to independent built-ins (`/code-review`, `/security-review`, `/verify`), because *independently checking* the result is exactly what those tools are for and re-deriving their logic here would rot. (Note `/simplify` is itself `/code-review --fix`, not a distinct simplifier — which is why Phase 2 owns its guidance rather than delegating, and Phase 4's `/code-review` then acts as an independent read-only check that Phases 1–3 did their job.)
 - **Never skip a phase to save time.** "The session was already long", "the diff is small", "a previous phase was thorough", "this is urgent" are never reasons to skip. The point of a finalize pass is that it is *complete and predictable*. If a phase genuinely does not apply (e.g. no SQL in the diff → no SQL best-practices), state that explicitly and move on — that is judgement, not skipping.
 - **Behavior preservation is sacred in the improvement phases.** Best-practices, simplify, and refactor must not change what the code *does*. The test suite (Phase 6) is the safety net that proves it — which is why those phases come before, not after, verification.
 - **Fail-stop, don't paper over.** If a modifying or audit phase hits an error it cannot cleanly resolve, stop the pipeline and report where you are. Do not silently continue or mask failures.
@@ -62,8 +62,9 @@ Gate: changed code follows the relevant idioms, or deviations are noted with rea
 
 Improve clarity and remove unnecessary complexity in the changed code.
 
-- Delegate to the **`/simplify`** command (equivalent to `/code-review --fix`), scoped to the diff.
+- Follow `references/simplify.md`. It carries the equivalence test that keeps this phase safe without a test gate, the clarity ethos, and the local-simplification catalog.
 - Goal is readability and removing accidental complexity — flatten needless nesting, name things well, drop dead code — **without** changing behavior or over-compressing into clever one-liners.
+- This is the middle improve rung: language idioms are Phase 1, structural change is Phase 3. Phase 2 is *local* clarity — single-location rewrites whose equivalence you can see. Anything you'd need the tests to prove belongs in Phase 3.
 
 Gate: the diff is as simple as it can be while staying clear.
 
@@ -171,6 +172,7 @@ Do not commit, push, or open a PR. If the verdict is READY TO SHIP, you may sugg
 | `references/best-practices/supabase.md` | Phase 1 | Supabase RLS/auth, roles, pooling (layers on postgresql/sql) |
 | `references/best-practices/frontend-a11y-i18n.md` | Phase 1 (+6) | Accessibility & i18n for UI changes |
 | `references/testing.md` | Phase 1 (+6) | Test-quality discipline (behavior over implementation, determinism, mocking) |
+| `references/simplify.md` | Phase 2 | Local clarity: equivalence test, clarity ethos, local-simplification catalog |
 | `references/codebase-fit.md` | Phase 1 (+4) | Reuse prior art, match patterns, respect boundaries — fit the change to the repo |
 | `references/spec-conformance.md` | Phase 0 (+4) | Pin the originating intent; check the diff for missing requirements, scope creep, wrong implementation |
 | `references/refactoring.md` | Phase 3 (+4) | Refactor priority model, behavior-preservation discipline & the diff-scoped structural-regression lane |

@@ -6,7 +6,7 @@ Currently ships one skill:
 
 ## `finalize`
 
-A post-implementation **finalization pipeline**: you run it once a change is functionally complete, and it brings the change up to shippable standard, then gives a go/no-go verdict. It is an *orchestrator* — where Claude Code already has a command (`/code-review`, `/security-review`, `/verify`, `/simplify`) it delegates to it, and carries its own guidance only for the gaps (language best-practices, refactor assessment, spec-conformance, doc updates, the validation gate).
+A post-implementation **finalization pipeline**: you run it once a change is functionally complete, and it brings the change up to shippable standard, then gives a go/no-go verdict. It is an *orchestrator* — where Claude Code already has an independent-check command (`/code-review`, `/security-review`, `/verify`) it delegates to it, and carries its own guidance for the improve work and the remaining gaps (language best-practices, simplification, refactor assessment, spec-conformance, doc updates, the validation gate). (`/simplify` isn't delegated to — it's just `/code-review --fix`, so Phase 2 owns its guidance.)
 
 **It never commits, pushes, or opens a PR** — it stops at a verdict and a summary, and leaves all git actions to you.
 
@@ -15,7 +15,7 @@ A post-implementation **finalization pipeline**: you run it once a change is fun
 ```
 0  Scope & baseline    detect diff/languages, read CLAUDE.md, pin the spec/intent, confirm green start (commit first!)
 1  Best-practices      apply language/framework idioms to the changed code
-2  Simplify            /simplify the diff for clarity
+2  Simplify            local clarity pass on the diff (behavior-obvious cleanups)
 3  Refactor            fix structural problems worth fixing now (test-gated)
 4  Audit               /code-review + /security-review + secret scan + dependency audit + consistency + spec-conformance + structural regression
 5  Update docs         sync README/CLAUDE.md/API docs/changelog with the change
@@ -26,7 +26,7 @@ A post-implementation **finalization pipeline**: you run it once a change is fun
 
 Findings in the audit and gate phases are adversarially verified — each must survive a trigger test (a concrete, reproducible failure) before it can block, so the punch list stays trustworthy rather than noisy.
 
-Best-practices coverage (loaded only for the languages in your diff): general OOP/backend, JavaScript, TypeScript, Python, PHP, Laravel, Vue, SQL, PostgreSQL, plus accessibility & i18n. Cross-cutting: refactoring (incl. structural-regression), codebase-fit, spec-conformance, finding-verification, test quality, docs, dependency/license audit, performance profiling, and the validation gate.
+Best-practices coverage (loaded only for the languages in your diff): general OOP/backend, JavaScript, TypeScript, Python, PHP, Laravel, Vue, SQL, PostgreSQL, plus accessibility & i18n. Cross-cutting: simplify (local clarity), refactoring (incl. structural-regression), codebase-fit, spec-conformance, finding-verification, test quality, docs, dependency/license audit, performance profiling, and the validation gate.
 
 ## Install
 

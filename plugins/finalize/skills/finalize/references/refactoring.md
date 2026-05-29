@@ -2,6 +2,8 @@
 
 Phase 3 of `/finalize` (fix structural problems) and the structural-regression lane of Phase 4 (flag them, read-only). Assess the changed code for structural problems and, in Phase 3, fix ONLY those that genuinely improve it. Many changes need no refactor at all — don't manufacture work to look thorough. Applies to the changed code in the diff, not the whole repo. Project conventions in CLAUDE.md always override these rules.
 
+Local clarity fixes — flattening with guard clauses, deleting dead code, naming magic numbers, renaming a local — belong to **Phase 2** (`simplify.md`), whose equivalence is visible on inspection. This phase is for *structural* change whose behavior preservation needs the test suite to prove it.
+
 ## The discipline (non-negotiable)
 Refactoring preserves behavior. It changes structure — never what the code does. The two are separate activities; mixing them hides bugs.
 - A passing test suite is the safety net that proves behavior held. If there are no tests covering the code you want to restructure, you are *editing*, not refactoring — either add a characterization test that pins the current behavior first, or flag the gap and defer the change.
@@ -10,10 +12,10 @@ Refactoring preserves behavior. It changes structure — never what the code doe
 
 ## Priority model
 Triage every candidate against this. Effort and risk are part of the decision, not just severity.
-- **Critical — fix now**: knowledge duplication that will drift out of sync; nesting deeper than ~3 levels; a function doing several unrelated things. These actively cause bugs and block understanding.
-- **High — fix if low-risk**: magic numbers; unclear or misleading names; functions over ~30 lines. Worth doing when the fix is safe and local; defer if it would sprawl.
-- **Nice — only if trivial**: minor naming nits, cosmetic tidy-ups directly in the changed lines.
-- **Skip**: code that is already clean; any cosmetic churn in code the change didn't touch.
+- **Critical — fix now**: knowledge duplication that will drift out of sync; a function doing several unrelated things; nesting so deep that only an extraction — not a Phase 2 guard clause — can resolve it. These actively cause bugs and block understanding.
+- **High — fix if low-risk**: long parameter lists hiding a missing type; functions over ~30 lines doing too much; primitive obsession in a core domain type. Worth doing when the fix is safe and local; defer if it would sprawl.
+- **Nice — only if trivial**: cosmetic structural tidy-ups directly in the changed lines.
+- **Skip**: code that is already clean; any cosmetic churn in code the change didn't touch; pure local-clarity nits — those are Phase 2's (`simplify.md`).
 
 ## DRY means knowledge, not code
 DRY is about a single source of truth for a piece of *knowledge*, not about eliminating similar-looking text.
@@ -34,9 +36,6 @@ Each: what it is → the fix.
 - **Long parameter list** — params that travel together as a hidden concept → introduce a parameter object / value object.
 - **Feature envy** — a method that reaches into another object's data more than its own → move the method to the data it uses.
 - **Primitive obsession** — meaning/validation carried in bare strings/numbers → introduce a domain type that owns it.
-- **Magic numbers** — unexplained literals → replace with named constants.
-- **Nested conditionals** — arrow-shaped indentation → guard clauses / early returns to flatten the happy path.
-- **Dead code** — unreachable or unused branches, vars, params → delete it; version control remembers.
 - **Inappropriate intimacy** — two classes entangled in each other's internals → reduce coupling via a clear interface or by relocating behavior.
 
 ## Module depth & the deletion test
