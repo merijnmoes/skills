@@ -18,23 +18,3 @@ Independent correctness review of the **diff only**, dispatched to a fresh-conte
 ## Output
 
 Consolidate into the Phase-4 punch list. Before anything blocks, run it through `finding-verification.md`: it needs a concrete, reachable trigger (a real input or sequence that reaches the bug), known false-positive classes are downgraded, and any framework/library claim is checked against docs. Label each surviving finding with **severity** and **confidence**, and order by business impact.
-
-**Then verify** by running this exact command:
-`test -s plugins/finalize/skills/finalize/references/code-review.md && grep -c "Type-boundary correctness" plugins/finalize/skills/finalize/references/code-review.md`
-It must print `1`.
-
-**Then commit** (run from the repo root):
-```
-git add plugins/finalize/skills/finalize/references/code-review.md
-git commit -m "$(cat <<'EOF'
-feat(finalize): add own code-review reference (correctness lane)
-
-Replaces delegation to the /code-review built-in with the skill's own
-diff-scoped correctness checklist, run by a fresh-context subagent.
-
-Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
-EOF
-)"
-```
-
-Do not touch any other file. Do not push. Report back: status (DONE / BLOCKED), the grep output, and the commit short SHA (`git rev-parse --short HEAD`).
