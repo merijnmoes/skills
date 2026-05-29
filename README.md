@@ -33,15 +33,15 @@ Best-practices coverage (loaded only for the languages in your diff): general OO
 Install with the [`skills`](https://github.com/vercel-labs/skills) CLI — one command, no clone, works across Claude Code, Codex, Copilot, and 50+ other agents:
 
 ```bash
-npx skills add MerijnMoes/skills
+npx skills add merijnmoes/skills
 ```
 
 That prompts for which agent(s) to install into. To skip the prompt, target agents directly or install globally:
 
 ```bash
-npx skills add MerijnMoes/skills -a claude-code -a codex -a github-copilot
-npx skills add MerijnMoes/skills -g        # global (~/<agent>/skills) — available in every project
-npx skills add MerijnMoes/skills --copy    # copy the files instead of symlinking
+npx skills add merijnmoes/skills -a claude-code -a codex -a github-copilot
+npx skills add merijnmoes/skills -g        # global (~/<agent>/skills) — available in every project
+npx skills add merijnmoes/skills --copy    # copy the files instead of symlinking
 ```
 
 Then invoke it:
@@ -62,7 +62,7 @@ Then invoke it:
 
 ## Adding another skill
 
-Create `skills/<name>/SKILL.md` (plus an optional folder of reference files beside it) and commit it. `npx skills add MerijnMoes/skills` will discover and offer it automatically.
+Create `skills/<name>/SKILL.md` (plus an optional folder of reference files beside it) and commit it. `npx skills add merijnmoes/skills` will discover and offer it automatically.
 
 ## License
 
