@@ -1,6 +1,6 @@
 # merijn-skills
 
-A personal collection of AI-coding-agent skills, authored once and usable across [Claude Code](https://code.claude.com), [OpenAI Codex CLI](https://developers.openai.com/codex), and [GitHub Copilot CLI](https://docs.github.com/en/copilot). The skill lives at `.agents/skills/<skill>/` — the shared convention Codex and Copilot read directly — and Claude Code consumes the same files through a plugin marketplace whose skill path is a symlink into that canonical dir.
+A personal collection of agent skills for AI coding CLIs — installable across [Claude Code](https://code.claude.com), [OpenAI Codex CLI](https://developers.openai.com/codex), [GitHub Copilot CLI](https://docs.github.com/en/copilot), and [50+ other agents](https://github.com/vercel-labs/skills) with a single `npx skills` command.
 
 Currently ships one skill:
 
@@ -30,71 +30,39 @@ Best-practices coverage (loaded only for the languages in your diff): general OO
 
 ## Install
 
-The skill is authored once at `.agents/skills/finalize/`. Codex CLI and Copilot CLI read that path directly; Claude Code installs the same files via the plugin marketplace.
-
-### Claude Code
-
-**As a plugin** (invoked as `/finalize:finalize`):
-
-```
-/plugin marketplace add MerijnMoes/skills
-/plugin install finalize@merijn-skills
-```
-
-The plugin path is a symlink into `.agents/skills/finalize/`; Claude's installer dereferences it, so the marketplace install copies the real files into its cache.
-
-**As a personal skill** (invoked as the bare `/finalize`) — copy or symlink the canonical folder into your Claude config:
+Install with the [`skills`](https://github.com/vercel-labs/skills) CLI — one command, no clone, works across Claude Code, Codex, Copilot, and 50+ other agents:
 
 ```bash
-cp -R .agents/skills/finalize ~/.claude/skills/finalize
-# or symlink it so it stays in sync with this repo:
-ln -s "$(pwd)/.agents/skills/finalize" ~/.claude/skills/finalize
+npx skills add MerijnMoes/skills
 ```
 
-> Plugins are namespaced (`plugin:skill`) to avoid collisions, so the plugin install gives `/finalize:finalize`. Personal skills are invoked by bare name, so the copy/symlink route gives the cleaner `/finalize`.
-
-### Codex CLI & GitHub Copilot CLI
-
-Install with the [`skills`](https://github.com/vercel-labs/skills) CLI — no clone, no separate publish, and it works across Codex, Copilot, and 50+ other agents:
+That prompts for which agent(s) to install into. To skip the prompt, target agents directly or install globally:
 
 ```bash
-npx skills add MerijnMoes/skills                             # interactive: pick agents
-npx skills add MerijnMoes/skills -a codex -a github-copilot  # target agents directly
-npx skills add MerijnMoes/skills -g                          # global (~/<agent>/skills), everywhere
-npx skills add MerijnMoes/skills --copy                      # copy instead of symlink
+npx skills add MerijnMoes/skills -a claude-code -a codex -a github-copilot
+npx skills add MerijnMoes/skills -g        # global (~/<agent>/skills) — available in every project
+npx skills add MerijnMoes/skills --copy    # copy the files instead of symlinking
 ```
 
-Codex and Copilot share the `.agents/skills/` directory, so one install covers both. Then invoke it:
+Then invoke it:
 
-- **Codex CLI** — run `$finalize`, or pick `finalize` from the `/skills` list.
-- **Copilot CLI** — ask "use the finalize skill" (no custom slash commands).
-
-> The same CLI installs for Claude Code too (`-a claude-code`), as an alternative to the plugin marketplace above.
+- **Claude Code** — `/finalize`
+- **Codex CLI** — `$finalize`, or pick `finalize` from the `/skills` list
+- **Copilot CLI** — ask "use the finalize skill" (Copilot has no custom slash commands)
 
 ## Repository structure
 
 ```
 .
-├── .agents/
-│   └── skills/
-│       └── finalize/                   # canonical skill — read directly by Codex & Copilot CLI
-│           ├── SKILL.md
-│           └── references/             # progressive-disclosure guidance loaded on demand
-├── .claude-plugin/marketplace.json     # the "merijn-skills" marketplace catalog (Claude Code)
-└── plugins/
+└── skills/
     └── finalize/
-        ├── .claude-plugin/plugin.json
-        └── skills/finalize  ->  ../../../.agents/skills/finalize   # symlink into the canonical dir
+        ├── SKILL.md
+        └── references/   # progressive-disclosure guidance loaded on demand
 ```
 
 ## Adding another skill
 
-1. Author the skill at `.agents/skills/<skill>/SKILL.md` (plus an optional `references/` folder). This is what Codex and Copilot read.
-2. To also ship it as a Claude Code plugin, create `plugins/<plugin>/.claude-plugin/plugin.json`, symlink the skill into the plugin, and add an entry to `plugins` in `.claude-plugin/marketplace.json`:
-
-```bash
-ln -s ../../../.agents/skills/<skill> plugins/<plugin>/skills/<skill>
-```
+Create `skills/<name>/SKILL.md` (plus an optional folder of reference files beside it) and commit it. `npx skills add MerijnMoes/skills` will discover and offer it automatically.
 
 ## License
 
