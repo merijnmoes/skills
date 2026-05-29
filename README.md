@@ -55,15 +55,21 @@ ln -s "$(pwd)/.agents/skills/finalize" ~/.claude/skills/finalize
 
 ### Codex CLI & GitHub Copilot CLI
 
-Both read the shared `.agents/skills/` convention — project-level (scanned from the working directory up to the repo root) and personal (`~/.agents/skills/`). Run either CLI from inside a clone of this repo and the skill is already discovered. To make it available in every project, link the canonical folder into your personal skills dir:
+Install with the [`skills`](https://github.com/vercel-labs/skills) CLI — no clone, no separate publish, and it works across Codex, Copilot, and 50+ other agents:
 
 ```bash
-mkdir -p ~/.agents/skills
-ln -s "$(pwd)/.agents/skills/finalize" ~/.agents/skills/finalize
+npx skills add MerijnMoes/skills                             # interactive: pick agents
+npx skills add MerijnMoes/skills -a codex -a github-copilot  # target agents directly
+npx skills add MerijnMoes/skills -g                          # global (~/<agent>/skills), everywhere
+npx skills add MerijnMoes/skills --copy                      # copy instead of symlink
 ```
 
-- **Codex CLI** — run it with `$finalize`, pick it from the `/skills` list, or let Codex select it by description.
-- **Copilot CLI** — invoke by name ("use the finalize skill"). Copilot CLI does not support custom slash commands, so there is no `/finalize` there.
+Codex and Copilot share the `.agents/skills/` directory, so one install covers both. Then invoke it:
+
+- **Codex CLI** — run `$finalize`, or pick `finalize` from the `/skills` list.
+- **Copilot CLI** — ask "use the finalize skill" (no custom slash commands).
+
+> The same CLI installs for Claude Code too (`-a claude-code`), as an alternative to the plugin marketplace above.
 
 ## Repository structure
 
