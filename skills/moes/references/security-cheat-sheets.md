@@ -17,7 +17,17 @@ Start with `security-review.md` as the always-on floor. Then load the focused re
 - `auth-session-review.md`
   Load when the diff touches login, signup, logout, password reset, MFA, session/cookie/token handling, roles/permissions, or identity-provider integration.
 - `input-upload-output-review.md`
-  Load when the diff accepts untrusted input, parses files, renders rich output, builds URLs/queries/commands, or handles uploads/downloads.
+  Load when the diff accepts untrusted input, parses files, renders rich output, builds URLs/queries/commands, or handles uploads/downloads. Pair with the cross-cutting deep dives below when their trigger fires.
+- `sql-injection-prevention.md`
+  Load when the diff builds SQL text, uses ORM raw paths (`whereRaw`, `RawSQL`, `extra()`, `$queryRaw`, `text()`), or interpolates identifiers / sort / filter into queries.
+- `xss-prevention.md`
+  Load when the diff renders HTML/templates/markdown, uses an escaping escape-hatch (`dangerouslySetInnerHTML`, `v-html`, `{@html}`, `|safe`, `html_safe`), builds URLs/redirects from input, or embeds JSON in HTML.
+- `n-plus-one-queries.md`
+  Load when the diff loops over rows with a query inside, touches ORM relations/serializers/GraphQL resolvers, or adds list endpoints without eager-loading evidence. Performance + load-correctness companion.
+- `error-handling-principles.md`
+  Load alongside `error-handling-review.md` when the diff needs the cross-language pattern catalog (retry keys/backoff, compensation, specific-catch, degrade/diagnose shapes) rather than just lane verdicts.
+- `async-concurrency-patterns.md`
+  Load alongside `bug-hunting.md` / `error-handling-review.md` when the diff adds async/await, threads, workers, queues, channels, locks, or shared mutable state.
 - `infra-security-review.md`
   Load under `security-review.md` when the diff changes Docker, Kubernetes,
   Terraform, cloud config, deploy manifests, container/runtime security

@@ -9,6 +9,10 @@ should not block just because it sounds plausible; it must survive challenge,
 carry the right next action, and arrive at the verdict with enough structure
 that the user does not have to re-triage it by hand.
 
+## Quality policy
+
+No finding without a concrete failure mode. Every candidate names: the trigger, the wrong outcome (or concrete cost for quality findings), and the violated invariant or spec point. Label-only claims ("violates SOLID", "not clean", "could be faster") are dropped at the source. Version-gated toolchain claims ("use X", "deprecated in Y") require a `docs-checked` cite or cap confidence at Medium — never assert current best practice from memory. This policy is what lets the lane set grow without the punch list rotting.
+
 ## Required fields per finding
 
 Every lane that emits a finding into the shared `Finding Set` should provide:
@@ -16,6 +20,7 @@ Every lane that emits a finding into the shared `Finding Set` should provide:
 - title
 - lane/source
 - file or surface
+- origin: `new` | `surfaced` | `pre-existing` (see below — blame from diff ranges, not guessing)
 - severity
 - confidence
 - reachability
@@ -101,6 +106,16 @@ The failure scenario is the trigger plus the wrong outcome (or concrete cost for
 Architecture findings may block through the mechanism gate instead of a reachable trigger: the triple of harmed parties named, blast radius counted, and cheaper alternative stated replaces the trigger requirement, while `failureScenario` is still carried as the concrete cost.
 Concurrency hazards use the same gate with the race-mechanism triple defined in `bug-hunting.md`.
 
+## Origin: new / surfaced / pre-existing
+
+The diff is the unit of work. Blame every finding from diff ranges (`git diff <base>...HEAD` + `git blame`), not from memory:
+
+- **`new`** — defect in added/modified lines. Normal severity. Can block when the trigger test passes.
+- **`surfaced`** — defect in untouched code that *this diff* newly exposes or activates (new caller hits a buggy path, new input shape reaches an old parser, new concurrency reaches an unsafe helper). Auto-downgrade one severity tier, group in a separate `Surfaced` report section. Blocks only on red-lane diffs with a reachable trigger through this diff; otherwise non-blocking. Always state the activation path: which changed line reaches the old defect.
+- **`pre-existing`** — untouched and unactivated by this diff. Never blocks. Report at most as a one-line deferred aside, or omit. Do not punish the author for old sins — file it as follow-up (`Plan`) or drop it.
+
+If blame is ambiguous, mark `surfaced` and state why, rather than inflating to `new`.
+
 ## Known false-positive classes
 
 Downgrade these from blocking unless you have specific evidence the protection
@@ -175,6 +190,8 @@ Every finding fixed inside `moes` is accounted for in an outcomes ledger:
 each id gets exactly one of `fixed`, `skipped` (with reason), or
 `no_change_needed`. A ledger that does not cover every finding id is
 incomplete — a fixer that silently shortens the list has failed verification.
+
+Suppression lifecycle (repo-local `.forge/` state, never committed): a finding marked `deferred` or `wontfix` carries `code_hash` (±3 lines around each location) + reason + date. Re-run reopens it when the hash drifts (code changed) or after 30 days stale; otherwise it stays suppressed. Snoozed findings carry `snoozed_until`. Suppression never hides a `new` blocker — it only quiets acknowledged non-blockers across runs.
 
 Ledger outcomes map onto lifecycle statuses: `fixed` stays `fixed`; `skipped` (with reason) maps to `deferred`; `no_change_needed` (with reason) maps to `dropped`.
 
@@ -260,6 +277,8 @@ The challenger is selective and runs after the reverse audit:
 
 Its job is to disprove weak blockers and surface missed high-impact defects,
 not to create a second wall of findings. The surprise-pass execution is an explicit gap-hunting mode, ordered after the reverse audit.
+
+Blind re-check discipline: the challenger receives only `title + description + code` for each challenged finding — never the originating lane's reasoning or evidence text. Agreement by copying is not verification; the challenger must reproduce the judgment from the code or drop/downgrade it. A verifier confidence drop of more than one tier (e.g. High → Low) auto-escalates the finding to the challenger for arbitration instead of dying silently.
 
 ## Decision packet
 

@@ -10,6 +10,7 @@ risk is, and what evidence exists before deeper review begins.
 - base branch and comparison point
 - changed surfaces and subsystem clusters
 - language and framework detection
+- stack-context snapshot (single version profile shared by all later lanes — see below)
 - project-context capsule
 - pinned intent/spec source
 - risk lane: `green` | `yellow` | `red`
@@ -23,6 +24,20 @@ risk is, and what evidence exists before deeper review begins.
 - App Store / submission implications
 - verifier inventory and initial results
 - missing artifacts / unknowns
+
+## Stack-context snapshot
+
+Build once in Phase 0 so later lanes stop guessing versions independently.
+Capture only what the diff's stacks need — no generic inventory:
+
+- language + version (e.g. `python 3.12`, `node 22`, `php 8.3`, `go 1.23`)
+- framework + major version (e.g. `django 5.x`, `fastapi 0.11x + pydantic v2`, `react 19`, `laravel 11`)
+- module system / packaging as relevant (ESM vs CJS, `src/` layout, Vite/Rolldown, TS `strict`)
+- ORM / data layer (e.g. `prisma 5`, `typeorm 0.3`, `sqlalchemy 2`, raw SQL)
+- test runner semantics (e.g. `pytest asyncio_mode=auto`, `vitest 3 mock hoisting`, `phpunit 11`)
+- declared vs resolved version when they differ (manifest says `^18`, lockfile says `18.19`)
+
+Sources, in order: lockfiles / manifests (`package-lock.json`, `pyproject.toml` + `uv.lock`, `composer.lock`, `go.mod`), Docker base image tag, CI matrix, then code signals. If a version cannot be determined, write `unknown (assumed X for review, verify before version-gated claim)` — never assert a version-gated finding from memory. This snapshot is read-only input to Phases 1, 4, and 6; version-gated claims without a snapshot cite must cap confidence at Medium per `findings-lifecycle.md`.
 
 ## Risk lane calibration
 

@@ -115,8 +115,8 @@ Establish exactly what `moes` is hardening and confirm it starts from a known-go
    to `main`, then `master`, then `develop`. Identify the current branch with
    `git rev-parse --abbrev-ref HEAD`.
 2. **Branch safety.** If the current branch *is* the base branch (e.g. on `main`), warn the user — `moes` assumes feature work on a branch. Continue only if they confirm.
-3. **Compute the diff.** `git diff <base>...HEAD` for committed work, plus `git status` / `git diff` for uncommitted work. This combined diff is your source of truth for every later phase.
-4. **Detect languages & frameworks** from changed file extensions and manifests (`package.json`, `composer.json`, `pyproject.toml`, `*.csproj`, etc.). This decides which best-practices references load in Phase 1.
+3. **Compute the diff.** `git diff <base>...HEAD` for committed work, plus `git status` / `git diff` for uncommitted work. This combined diff is your source of truth for every later phase. Optional accelerator (stdlib-only, degrades gracefully): `python3 <skill-dir>/scripts/triage.py --base <base>` for size XS-XL, time estimate, and `NO_TEST_CHANGES` / `SECURITY_SURFACE` / `MIGRATION_DATA` / `CONFIG_ROLLOUT` / `LARGE_DIFF_SHARD` flags. If the script cannot run, do the same triage by hand — never block on tooling.
+4. **Detect languages & frameworks** from changed file extensions and manifests (`package.json`, `composer.json`, `pyproject.toml`, `*.csproj`, etc.). This decides which best-practices references load in Phase 1. Build the single **stack-context snapshot** defined in `references/evidence-pack.md` (language/framework/ORM/test-runner versions, declared vs resolved) so Phases 1, 4, and 6 share one version profile instead of guessing independently.
 5. **Build a project context capsule.** Follow `references/project-context.md`: capture relevant standing instructions, architecture boundaries, local patterns/prior art, domain invariants, tooling/test norms, docs/release conventions, and unknowns. This capsule drives Phases 1, 4, 6, 7, and 8.
 6. **Build a risk map.** Follow `references/risk-mapping.md` to classify the change and write down the top risks before you start polishing. Capture the change archetypes in play (e.g. UI, API, auth, persistence, schema/migration, async/job, integration, config/feature-flag, perf-sensitive), the project/domain invariants from the context capsule, the side effects, the trust boundaries, and the 2-5 highest-value failure modes to probe later. This risk map drives Phases 4, 6, and 7.
 7. **Pin the spec/intent.** Establish *what this change was supposed to do* so Phase 4 can check the diff against it. Follow `references/spec-conformance.md`: look for issue refs in commit messages (`#123`, `Closes #45` → `gh issue view` if available), then a PRD/spec file under `docs/`/`specs/`/`.scratch/` matching the branch/feature, then the branch name as a weak hint. If none of those turn up, ask the user once for a one-line intent or a path. If they have none either, record "no external spec; internal-consistency check only" and proceed — never block on a missing spec. Carry the pinned intent (and its source) forward.
@@ -132,7 +132,7 @@ Establish exactly what `moes` is hardening and confirm it starts from a known-go
    exactly. That reference is the canonical schema and output discipline for
    the `Evidence Pack`; do not create a smaller competing definition here.
 
-Gate: you have a clear diff, a language list, a project context capsule, a risk
+Gate: you have a clear diff, a language list, a stack-context snapshot, a project context capsule, a risk
 map, a pinned intent (or an explicit note that none exists), a composed
 `Evidence Pack`, and a green starting state. If the baseline is already red,
 stop rather than proceeding with an acknowledged failure.
@@ -189,7 +189,7 @@ Gate: structural issues are either fixed (with tests still green) or consciously
 
 ### Phase 4 — Audit *(limited-mutation audit; maximal lane registry; fixes applied after consolidation)*
 
-Independently review the now-polished diff. Phase 4 is a **maximal-audit lane registry**: enumerate the full lane set the diff could plausibly need, then mark each lane `run`, `N/A`, or `deferred by environment` before consolidating findings. The default contract is audit-first, with mutation allowed only after consolidation and only for safe localized fixes that satisfy the auto-fix contract below. Run the lane work as one parallel wave where possible (dispatch parallel subagents — see the `dispatching-parallel-agents` skill and the wave pattern in `../forge/references/delegation.md`) and consolidate their findings into one punch list before any fix is applied. Build one shared context packet once (diff plus Evidence Pack slices: risk map, project context capsule, pinned intent, runtime sketch, hotspots) and hand the same packet to every worker. Every worker returns normalized candidate findings plus a `Covered:` receipt naming what it read; any lane without a receipt is re-run or marked honestly as unexercised.
+Independently review the now-polished diff. Phase 4 is a **maximal-audit lane registry**: enumerate the full lane set the diff could plausibly need, then mark each lane `run`, `N/A`, or `deferred by environment` before consolidating findings. The default contract is audit-first, with mutation allowed only after consolidation and only for safe localized fixes that satisfy the auto-fix contract below. Run the lane work as one parallel wave where possible (dispatch parallel subagents — see the `dispatching-parallel-agents` skill and the wave pattern in `../forge/references/delegation.md`) and consolidate their findings into one punch list before any fix is applied. Build one shared context packet once (diff plus Evidence Pack slices: risk map, stack-context snapshot, project context capsule, pinned intent, runtime sketch, hotspots) and hand the same packet to every worker. Every worker returns normalized candidate findings plus a `Covered:` receipt naming what it read; any lane without a receipt is re-run or marked honestly as unexercised.
 
 Fan-out roster (all read-only, fresh-context, depth 1):
 
@@ -208,7 +208,7 @@ Fan-out roster (all read-only, fresh-context, depth 1):
 - **B build & test probe**: shell only under the QA worker role; mutating probes run in a throwaway worktree so readers never see a dirty tree.
 Review workers follow `../forge/references/worker-templates/review.md`. Shared methodology skills (such as `dispatching-parallel-agents`) are referenced by skill name and ship with `forge` in this repo.
 
-Large-diff rule: when the diff exceeds 500 source lines or 3200 total lines, switch the C and Q groups to territory agents of roughly 400 lines each, split on hunk boundaries and never inside a function. Whole-diff lanes (S, A, U, D, the cross-chunk half of C2, C3) keep whole-diff scope.
+Large-diff rule: when the diff exceeds 500 source lines or 3200 total lines, switch the C and Q groups to territory agents of roughly 400 lines each, split on hunk boundaries and never inside a function. Cap each worker at 40 files / 200kB per chunk; permute file order per agent so the same files are not always read last. Whole-diff lanes (S, A, U, D, the cross-chunk half of C2, C3) keep whole-diff scope. Checkpoint per lane (run key = HEAD + diff bytes + lane set); on interruption resume from the last completed lane, never silently re-scope. Any lane without a receipt, any failed worker, or any capped hunt is surfaced as an explicit `PARTIAL REVIEW` gap — never absorbed quietly. Re-runs on an advanced HEAD review only the `last_reviewed..HEAD` delta (incremental); same-SHA re-runs reuse artifacts.
 
 Effort tiers change depth, never diff/base mechanics: `low` is a pre-screen outside `moes` (inline sweep only: no Ledger, no Decision Packet, no verdict, no ship-readiness claim); `medium` runs a reduced fan-out plus build/test and a single verification pass with no reverse audit; `high` runs the full fan-out plus sharded verification plus reverse audit. Default to `high` for `/moes`; a green-lane diff may drop to `medium` with an explicit note.
 
@@ -243,7 +243,7 @@ Use the Phase-0 risk map and project context capsule to decide which conditional
   of noisy findings, or change the verdict without evidence.
 - Challenger execution: on hosts with subagents, run it as a fresh-context
   adversarial pass using the same diff and the relevant slices of the
-  `Evidence Pack`. On hosts without subagents, run the same challenger criteria
+  `Evidence Pack`. Blind discipline: pass only `title + description + code` per challenged finding — never the originating lane's reasoning or evidence text. On hosts without subagents, run the same challenger criteria
   inline as a separate pass after the reverse audit (order for the whole back half: consolidate, then sharded verification, then reverse audit, then challenger).
 - Auto-fix contract: only apply findings whose fix is safe, localized,
   low-blast-radius, and realistically verifiable in Phase 6. Do not auto-fix
@@ -371,13 +371,13 @@ Use the Phase-0 risk map and project context capsule to decide which conditional
 
 Consolidate the lanes into one punch list. **Before marking anything blocking,
 run it through `references/findings-lifecycle.md`** — require a concrete
-reachable trigger, downgrade known false-positive classes, verify any
+reachable trigger, blame origin (`new` / `surfaced` / `pre-existing` from diff ranges, never guessing), downgrade known false-positive classes, verify any
 framework/library claim against docs, and assign the right action type and
 status. Every surviving finding must carry title, lane/source, file or
-surface, severity, confidence, reachability, evidence type, concrete
+surface, origin, severity, confidence, reachability, evidence type, concrete
 trigger/evidence, violated invariant or spec point, action type
 (Fix / Investigate / Plan / Decide), and an internal workflow status from the
-shared `Finding Set`. Order by business impact.
+shared `Finding Set`. Order by business impact (`new` blockers first, then `surfaced`).
 Only localized findings with action type `Fix` should be fixed inside
 `moes`, and only when they satisfy the auto-fix contract above. Blocking
 findings with action types like `Plan`, `Decide`, or `Investigate` stay open
@@ -503,7 +503,8 @@ Present a concise report:
 - Perf/a11y/rollout/security: <only the relevant lanes and their evidence>
 
 ## Findings
-- Blocking: <none, or list with severity/confidence/action/trigger/report status>
+- Blocking: <none, or list with severity/confidence/origin/action/trigger/report status; `new` first>
+- Surfaced (old code this diff activates): <downgraded one tier, with activation path; never blocks except red-lane + reachable trigger>
 - Non-blocking: <deferred items, coverage gaps, low-confidence notes, planned follow-ups, decision points, with report status>
 
 ## Considered and dismissed
@@ -567,6 +568,8 @@ Do not commit, push, or open a PR. If the verdict is READY TO SHIP, you may sugg
 | `references/best-practices/vue.md` | Phase 1 | Vue 3 / Composition API idioms |
 | `references/best-practices/css.md` | Phase 1 | CSS cascade, responsiveness, motion, and maintainability discipline |
 | `references/best-practices/sql.md` | Phase 1 | Cross-engine SQL query & index optimization |
+| `references/best-practices/rust.md` | Phase 1 | Rust ownership, thiserror/anyhow, SAFETY comments, async/cancellation discipline |
+| `references/best-practices/go.md` | Phase 1 | Go error wrapping, goroutine ownership, ctx propagation, resource discipline |
 | `references/best-practices/postgresql.md` | Phase 1 | PostgreSQL + ORM (TypeORM/Prisma) patterns |
 | `references/best-practices/supabase.md` | Phase 1 | Supabase RLS/auth, roles, pooling (layers on postgresql/sql) |
 | `references/best-practices/frontend-a11y-i18n.md` | Phase 1 (+6) | Accessibility & i18n for UI changes |
@@ -590,6 +593,11 @@ Do not commit, push, or open a PR. If the verdict is READY TO SHIP, you may sugg
 | `references/agent-security-review.md` | Phase 4 | LLM / agent / tool-calling security review grounded in OWASP LLM risks and AISVS-style verification |
 | `references/auth-session-review.md` | Phase 4 | Authentication, authorization, session, cookie, token, MFA, reset, and CSRF checks |
 | `references/input-upload-output-review.md` | Phase 4 | Untrusted input, upload, parsing, redirect, rendering, and outbound fetch safety |
+| `references/sql-injection-prevention.md` | Phase 4 | Parameterized queries, identifier allow-listing, ORM raw-path safety with multi-language examples |
+| `references/xss-prevention.md` | Phase 4 | Sink-aware output encoding, escape-hatch audit, URL/redirect validation |
+| `references/n-plus-one-queries.md` | Phase 4 (+6) | ORM eager-loading / batching patterns with per-stack fixes and query-count probe |
+| `references/error-handling-principles.md` | Phase 1 (+4) | Cross-language error/retry/compensation patterns companion to `error-handling-review.md` |
+| `references/async-concurrency-patterns.md` | Phase 1 (+4) | Owned concurrency, timeouts/cancellation, check-then-act races, delivery semantics |
 | `references/workflow-security.md` | Phase 4 | CI / GitHub Actions / release automation security review |
 | `references/repo-hygiene.md` | Phase 4 | Supply-chain posture, action pinning, repo policy, and governance-sensitive changes |
 | `references/dependency-audit.md` | Phase 4 | Vulnerability, license & supply-chain audit for changed deps |
@@ -613,6 +621,7 @@ Do not commit, push, or open a PR. If the verdict is READY TO SHIP, you may sugg
 | `references/update-docs.md` | Phase 5 | What docs to update and how |
 | `references/verification-ledger.md` | Phase 6 (+7 +8) | Shared `Verification Ledger` artifact for executed checks, observed results, coverage type, and unexercised risks |
 | `references/verify.md` | Phase 6 | Behavioral verification — run the app & observe; composes testing, a11y & performance refs |
+| `scripts/triage.py` | Phase 0 | Stdlib-only diff triage: size, time estimate, NO_TEST/SECURITY/MIGRATION/CONFIG/LARGE flags; manual fallback when unrunnable |
 | `references/testing-specialty-router.md` | Phase 6 | Router for framework- or stack-specific testing guidance when generic `testing.md` is not enough; use it for Playwright-specific browser flows and pytest fixture/async discipline |
 | `references/testing-playwright.md` | Phase 6 (via router) | Playwright specialty guidance for flake-resistant E2E verification and artifacts |
 | `references/testing-pytest.md` | Phase 6 (via router) | Pytest specialty guidance for fixtures, parametrization, async tests, and isolation |

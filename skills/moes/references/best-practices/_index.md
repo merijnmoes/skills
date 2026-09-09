@@ -19,6 +19,9 @@ Phase 1 of `moes` loads only the best-practices files relevant to what changed. 
 | `.css`, `.scss`, `.sass`, `.less`, CSS modules, substantial component/template style blocks | `css.md` (+ `frontend-a11y-i18n.md` for user-facing UI) |
 | `.sql`, raw queries, query builders (any engine) | `sql.md` |
 | PostgreSQL entities/migrations, TypeORM/Prisma, RLS | `postgresql.md` (+ `sql.md` for query tuning) |
+| `.rs`, `Cargo.toml` | `rust.md` (+ `../async-concurrency-patterns.md` for async/concurrency shapes) |
+| `.go`, `go.mod` | `go.md` (+ `../async-concurrency-patterns.md` for concurrency shapes) |
+| Python async/concurrency change (`async def`, `await`, `gather`, workers, queues) | `python.md` (+ `../async-concurrency-patterns.md` + `../error-handling-principles.md` for retry/compensation) |
 | Supabase project (`@supabase/supabase-js` in deps, a `supabase/` dir, or `auth.uid()`/`auth.*` in SQL/migrations) | `supabase.md` (+ `postgresql.md` + `sql.md`) |
 | Any UI / markup change (HTML, JSX/TSX, `.vue`, `.svelte`, templates, components, CSS) | `frontend-a11y-i18n.md` |
 
