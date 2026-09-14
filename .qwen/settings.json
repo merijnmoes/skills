@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(raw.githubusercontent.com)",
+      "WebFetch(api.github.com)",
+      "Bash(git commit *)",
+      "Bash(rm *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(env)",
+      "Bash(diff *)",
+      "Bash(sed *)",
+      "Bash(echo *)",
+      "Bash(git log *)",
+      "Bash(true)",
+      "Bash(npx *)",
+      "Bash(python3 *)"
+    ]
+  },
+  "$version": 4
+}

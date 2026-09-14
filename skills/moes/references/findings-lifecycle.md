@@ -106,6 +106,10 @@ The failure scenario is the trigger plus the wrong outcome (or concrete cost for
 Architecture findings may block through the mechanism gate instead of a reachable trigger: the triple of harmed parties named, blast radius counted, and cheaper alternative stated replaces the trigger requirement, while `failureScenario` is still carried as the concrete cost.
 Concurrency hazards use the same gate with the race-mechanism triple defined in `bug-hunting.md`.
 
+## Corroborated findings
+
+A finding rated HIGH (or higher) by a second independent audit — another lane, the challenger, or a late-arriving worker — may not be written off as residual risk or reasoned away. To close it you need all four: a concrete trigger, a reproducible example, an explicit `Fix` / `Investigate` / `Plan` / `Decide` decision, and fresh verification after any fix. Until then it stays verdict-affecting and is carried into the gate as blocking or contested. Late-arriving results re-enter here as new candidates: consolidate, verify, then re-decide — never patch the verdict by narration.
+
 ## Origin: new / surfaced / pre-existing
 
 The diff is the unit of work. Blame every finding from diff ranges (`git diff <base>...HEAD` + `git blame`), not from memory:

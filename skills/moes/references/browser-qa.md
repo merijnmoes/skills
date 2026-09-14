@@ -26,6 +26,8 @@ behavior.
 - flag overflow, clipping, layout shifts, missing states, and viewport-specific
   regressions;
 - compare against an existing baseline if the project already has one.
+- confirm responsive behavior explicitly per checked viewport instead of
+  assuming desktop success transfers to mobile.
 
 ### 4. Accessibility
 
@@ -49,3 +51,5 @@ Record:
 - explicitly state when artifacts were not captured;
 - explicitly state any checks that were not run and why;
 - what could not be exercised in the environment.
+- when there is no runnable target, mark browser and automated accessibility
+  checks honestly as environment-blocked — never as passed by inspection.

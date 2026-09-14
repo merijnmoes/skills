@@ -44,6 +44,12 @@ Look for the places where bugs usually hide:
   redirects, uploads, outbound requests.
 - **Derived state** — cache invalidation, denormalized counters, search indexes,
   analytics events, read models, materialized views.
+- **Quantitative breakdowns** — any total shown with lines/percentages: total
+  from a different source than the lines; normalization or fallback hiding a
+  data problem; rounded values that no longer sum to the total; a percentage
+  shown for a rounded-to-zero value; a visible category permanently at zero;
+  a mock that bypasses the real aggregation or renderer so the production path
+  never runs.
 - **Integration seams** — third-party APIs, queues, jobs, DB transactions,
   filesystem, message brokers, browser/server contracts.
 
@@ -63,6 +69,9 @@ Examples:
 - serialize -> parse -> serialize should preserve the intended value;
 - totals, balances, quotas, and counts should conserve or change by the exact
   amount expected.
+- a shown total should come from the same canonical source as its breakdown;
+  defensive normalization that makes the UI look safe while the underlying
+  invariant is broken is a defect, not a fix — prove the invariant first.
 
 Good invariants turn vague suspicion into crisp tests and sharper reviews.
 

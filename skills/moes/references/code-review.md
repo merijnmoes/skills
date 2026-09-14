@@ -42,7 +42,7 @@ walk; do not re-walk another lane's territory:
 - **Concurrency & ordering** — race conditions, non-atomic read-modify-write, shared mutable state without synchronisation, async/await ordering bugs, assumptions about callback/event order.
 - **Resource management** — leaked file handles, DB connections, sockets, timers, listeners or subscriptions; missing close/dispose on every path including errors.
 - **API & contract misuse** — wrong argument order, ignored return values/error codes, misread library semantics, deprecated calls. When unsure an API is current and used as maintainers intend, check the docs (Context7 if available) rather than trusting memory.
-- **State & data** — incorrect mutation of shared/aliased objects, stale caches, broken invariants, lost updates.
+- **State & data** — incorrect mutation of shared/aliased objects, stale caches, broken invariants, lost updates. Treat defensive normalization or fallback defaults as suspect until the underlying invariant is proven: prefer one canonical source for a total and its breakdown, and flag normalization that makes the UI look safe while hiding a data or wiring defect.
 - **Type-boundary correctness** — unchecked casts, parse/serialize round-trip edges, numeric precision/overflow, implicit coercion.
 - **Dead / unreachable code** introduced by the change.
 

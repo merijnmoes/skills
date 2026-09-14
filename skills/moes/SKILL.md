@@ -266,7 +266,10 @@ Use the Phase-0 risk map and project context capsule to decide which conditional
 
 - **Code review:** dispatch a fresh-context subagent (per the `dispatching-parallel-agents` skill) to review the diff following `references/code-review.md`. Pass the diff plus the shared context packet defined above. Start with the fast sweep from `references/common-bugs-checklist.md` and `references/universal-quality.md`, then do the deeper correctness pass. On a host without subagents, follow those references as an inline adversarial pass using the same context packet.
 - **Security review:** dispatch a fresh-context subagent to audit the diff following `references/security-review.md`, using `references/security-cheat-sheets.md` as the canonical router for the conditional security surfaces. Pass the diff plus the shared context packet defined above. Inline-adversarial fallback as above. When migration, observability, or configuration surfaces are in play, this lane owns the security-specific findings for them; the separate operational lanes below own the non-security rollout/operability/behavior findings. Infra, GitHub Actions exploit-path, threat-model-escalation, and security-requirements routes stay under security-lane ownership: keep them visible in the specialty lane registry, but normalize their findings under the shared security lane rather than as standalone Phase-4 lanes. Use the threat-model route when a red-lane trust boundary changes or a high-impact security finding needs abuse-path framing before it can block.
-- **Delegation recovery:** dispatched audit subagents must behave per `../forge/references/delegation.md`. If a review subagent fails, times out, is cancelled, or never returns, do not wait on it — run the same lane inline as an adversarial pass, or continue degraded with the partial result recorded. Never block the pipeline on a worker that does not deliver.
+- **Delegation recovery:** dispatched audit subagents must behave per `../forge/references/delegation.md`. If a review subagent fails, times out, is cancelled, or never returns, do not wait on it indefinitely — run the same lane inline as an adversarial pass, or continue degraded with the partial result recorded. A missing lane is never a pass: it stays an explicit unexercised gap.
+- **Lane-completion gate:** give no verdict while any registered `run` lane is still pending, running, or never returned. A running or not-yet-returned lane means no READY TO SHIP. Record which lanes actually completed and which did not; a provisional judgement made before all lanes returned is not a verdict.
+- **Late-arrival protocol:** if an audit result arrives after a provisional judgement, reopen Phase 4, consolidate the new findings into the shared `Finding Set`, apply only safe localized fixes per the auto-fix contract, rerun Phase 6 fully on the final code state, and only then issue a new verdict. Never patch a verdict with reasoning alone.
+- **Four-level assessment for new functionality:** judge new behavior on four levels separately — pure business logic, aggregation/integration wiring, UI rendering and formatting, and browser/accessibility behavior. A green level never proves the next level; each level needs its own evidence or an explicit gap.
 - **Secret scan:** scan the diff for committed secrets, credentials, tokens,
   private keys, or `.env` values. Verify hits with the same false-positive
   discipline in `references/findings-lifecycle.md`; any confirmed real secret
@@ -519,8 +522,11 @@ Present a concise report:
 
 ## Verification coverage
 - Directly verified: <what was run and observed>
-- Reasoned about: <what is supported indirectly by static checks, surrounding evidence, or code inspection>
+- Reasoned about (not runtime-tested): <what rests on inspection/reasoning only, kept distinct from verified>
 - Environment-blocked / not exercised: <what remained unproven and why>
+- Audit lanes completed: <which `run` lanes actually returned a receipt; which stayed pending>
+- Late arrivals: <which results arrived after a provisional judgement and how they were reconsolidated + re-verified, or `none`>
+- Fixes + reruns: <which findings were fixed and which tests/probes were rerun after the last change>
 
 ## What each phase did
 - Best-practices: <changes made, or "no change">

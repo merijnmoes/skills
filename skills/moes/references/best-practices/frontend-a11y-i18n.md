@@ -40,6 +40,18 @@ Loaded in `moes` Phase 1 when the diff touches UI/markup (HTML/JSX/TSX/Vue/Svelt
 - Keep locale-aware sorting/collation in mind (`Intl.Collator`) — byte-order sorts produce wrong results for accented and non-Latin text.
 - Externalize copy into resource files so translators can work without touching code.
 
+### Gettext / PO-based workflows (only when the repo uses them)
+- Check the source text semantically, not just syntactically — a grammatically
+  valid but misleading `msgid` is a defect even when the tooling is happy.
+- Check translated word order: never assume the translation keeps the source
+  order; placeholders must allow reordering via named/positional slots the
+  framework supports.
+- New or changed PO strings follow the repository workflow — typically marked
+  `fuzzy` until reviewed — so unreviewed translations never ship as final.
+- Compile and validate every changed MO file (e.g. `msgfmt --check`) and confirm
+  the built catalog actually loads; a PO edit without a valid compiled MO is
+  not done.
+
 ## Anti-patterns
 - Clickable `div`/`span` instead of `button`/`a`.
 - Inputs without labels; meaningful images without `alt`.
@@ -64,3 +76,4 @@ Loaded in `moes` Phase 1 when the diff touches UI/markup (HTML/JSX/TSX/Vue/Svelt
 - [ ] No hardcoded strings; full strings with named interpolation (no concatenation)
 - [ ] Plurals, dates, numbers, currency handled via framework/`Intl`
 - [ ] RTL + logical CSS properties where locales require it
+- [ ] Gettext (where used): source `msgid` semantically correct; translations allow reordered placeholders; new strings `fuzzy` per workflow; changed MO files compiled and validated

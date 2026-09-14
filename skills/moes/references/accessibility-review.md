@@ -25,6 +25,13 @@ changed surface was actually built and verified accessibly.
   tokens, states, animation, or theming, check contrast and
   `prefers-reduced-motion` behavior rather than assuming existing tokens still
   satisfy them.
+- **Table semantics** — when the diff renders tabular data, check real table
+  structure (`table`/`th` with `scope`, caption or labelled description, no
+  layout tables) with a screen reader in mind: headers must announce correctly
+  and the reading order must match the visual order.
+- **DOM-id and call-site integrity** — when the diff adds or renames DOM ids,
+  `aria-*` targets, or JS hooks, verify every id and every call-site/reference
+  matches; a dangling `for`, `aria-labelledby`, or query selector is a finding.
 
 ## Concrete prompts
 

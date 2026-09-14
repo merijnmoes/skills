@@ -58,8 +58,14 @@ contract.
 - **Evidence** — treat this as the heart of the report. For every relevant
   lane, say what evidence exists: static gates, tests, behavioral verification,
   project fit, docs/config, and only the relevant perf/a11y/rollout/security
-  checks. If something could not be run, say that plainly. Do not let absence
+  checks. Name which audit lanes actually completed, which results arrived late
+  (and how they were reconsolidated and re-verified), which findings were
+  fixed, and which tests were rerun after the last change. If something could not be run, say that plainly. Do not let absence
   of evidence read like positive evidence.
+- **Verification coverage** — separate directly verified from merely reasoned
+  about and from environment-blocked/not exercised. Risks that were only
+  reasoned about and never runtime-tested must be listed as such, never folded
+  into the verified list.
 - **Compact metadata matters.** Keep lane availability, specialty lane
   registry, specialty-lane auto-fix notes, and threat-model escalation status
   concise but explicit. This is where readers should learn which lanes ran,
@@ -128,6 +134,8 @@ it, but the report should make that description easy to derive.
 - [ ] Scope, touched surfaces, and intent source are stated clearly.
 - [ ] Project-specific context that mattered is stated clearly.
 - [ ] Evidence is listed per relevant lane, not implied.
+- [ ] Report names completed vs pending/late lanes, fixed findings, and tests rerun after the last change.
+- [ ] Reasoned-about-only risks are listed separately from directly verified ones.
 - [ ] Findings carry severity/confidence/action/trigger/status.
 - [ ] Learning notes explain the mechanism, why, trade-off, when-not-to-apply,
       and alternative for instructive advice.

@@ -24,6 +24,20 @@ ideation or verdict debate.
 - Record what was directly observed, what is only indirectly supported by
   evidence, and what the environment prevented you from running.
 
+## Four-level assessment for new functionality
+
+Judge new behavior on four levels separately, each with its own probe or an
+explicit gap — a green level never proves the next one:
+
+- **pure business logic** — unit probe on the calculation or rule;
+- **aggregation / integration wiring** — integration probe through the real
+  wiring with non-zero data (no mocked total standing in for the pipeline);
+- **UI rendering and formatting** — renderer probe with real data, including
+  rounding, zero, and fallback states;
+- **browser / accessibility behavior** — keyboard pass plus automated checker
+  (e.g. axe) where the surface is user-facing, or an explicit
+  environment-blocked gap when no runnable target exists.
+
 ## Procedure
 
 1. **Static gates** — run the project's formatter, linter and type-checker (detected in Phase 0). These are cheap and catch more than a human read.

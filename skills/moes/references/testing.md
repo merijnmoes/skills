@@ -51,7 +51,9 @@ Mock only at real boundaries you don't control — network, external services,
 filesystem/I/O, time, randomness. Don't mock types you own, and don't over-mock.
 Over-mocking tests the mocks instead of the code: it stays green even when the
 real integration is broken, because every collaborator was replaced by a
-stand-in that can't disagree. Prefer real objects or lightweight fakes where
+stand-in that can't disagree. A mock that bypasses the real integration or
+renderer code entirely — so the production wiring or formatting never runs in
+any test — is itself a finding, not coverage. Prefer real objects or lightweight fakes where
 they're cheap. For paths where mock/real divergence would hide bugs (queries,
 serialization, migrations), use an integration test against the real thing —
 e.g. a real test database — rather than asserting on a mock's recorded calls.
@@ -106,6 +108,19 @@ always hold:
 You do not need a special property-testing framework to do this well. A
 table-driven test, a loop over fixed fixtures, or a comparison against a simple
 oracle can often capture the invariant clearly.
+
+## Quantitative breakdowns (totals, lines, percentages)
+
+When the diff adds UI or logic that shows a total alongside its breakdown
+(lines, categories, percentages, quotas), require at minimum:
+
+- a test for the pure calculation;
+- a test for non-zero aggregation through the real wiring (not a mocked total);
+- a test for the renderer/formatter;
+- a zero/fallback test (empty input renders an honest empty state, never a misleading breakdown);
+- a consistency test proving total, rounded lines, and percentages mutually agree (rounded lines sum to the shown total; no percentage is shown for a rounded-to-zero value; no visible category is permanently zero without explanation).
+
+Judge the feature on four levels separately — pure logic, aggregation/integration, rendering/formatting, browser/accessibility behavior — and do not let a green level stand in for an untested one.
 
 ## The test pyramid
 

@@ -31,6 +31,9 @@ The ledger must explicitly record:
 - behavioral verification
 - accessibility or performance checks when relevant
 - every top risk from the risk map as either exercised or unexercised
+- which audit lanes actually completed, which stayed pending, and which results arrived late (with how the late result was consolidated and re-verified)
+- which findings were fixed and which tests were rerun after the last code change (Phase 6 is rerun fully on the final state, never assumed from a pre-fix run)
+- which risks were only reasoned about and not runtime-tested, kept distinct from directly verified ones
 - the audit trail: how many verify shards ran, how many reverse-audit rounds ran, and whether the audit stopped converged (2 consecutive dry rounds) or capped at the round limit
 - surprise-pass target and outcome when the surprise rule fired
 
