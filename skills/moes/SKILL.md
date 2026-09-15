@@ -92,6 +92,10 @@ Read these before starting. They explain *why* the pipeline is shaped the way it
 - **Be project-aware.** Read the repo's standing instructions, architecture docs, local patterns, tooling conventions, and domain rules before applying any "best practice". Build a small project context capsule and carry it through the pipeline; see `references/project-context.md`.
 - **Fit the codebase, not just correctness.** A change can be locally correct yet wrong for *this* repo — duplicating an existing helper, adding a second way to do something, or ignoring an established pattern. Reuse prior art and match surrounding conventions; see `references/codebase-fit.md`.
 - **Build the right change, not just a correct one.** Code can be clean, idiomatic, and correct yet not be *what was asked for* — a requirement left half-built, a misread of the spec, or behavior nobody requested. Conformance to the originating intent is its own check, distinct from quality; see `references/spec-conformance.md`. Clean but wrong → Standards pass, Spec fail. Right intent but breaks conventions → Spec pass, Standards fail. Report the two axes separately so one cannot mask the other.
+- **Follow the spec hierarchy; never let a lower layer silently override a higher one.** Priority order: (1) explicit user instruction; (2) repository guidelines (`AGENTS.md`, `CLAUDE.md`, project docs); (3) pinned feature-spec/intent; (4) existing tests and feature contracts; (5) surrounding implementation patterns; (6) general best practices; (7) agent preference. When spec, tests, and implementation appear to contradict each other, do not resolve it yourself — register a `Decide`/`Investigate` finding, state the uncertainty explicitly, and change nothing.
+- **Treat the feature-diff as protected.** Code that is part of the original feature-diff (committed or uncommitted change under review) must not be removed, renamed, or behaviorally altered just because the agent reads the spec differently, the code looks redundant, a cleaner design seems possible, or the behavior seems unnecessary. When in doubt, mark the observation `Decide`/`Investigate`, describe both readings, and change nothing. Any proposed removal must demonstrate all four: (1) the code is demonstrably defective (reachable trigger, not an interpretation difference); (2) it is not required by the pinned intent; (3) no existing test, caller, DOM-hook, translation, or runtime flow depends on it; (4) removal takes away no feature behavior. If any of the four is uncertain, do not remove.
+- **Classify before you change.** Every edit must first be labeled exactly one of: a proven defect (reachable trigger plus violated invariant), a spec ambiguity (needs `Decide`), a personal preference, or an optional improvement. Only a proven defect with a safe localized fix qualifies for editing inside `moes`; the other three become findings (`Decide` / `Investigate` / `Plan`), never silent edits.
+- **Local workflow beats general knowledge; translations and generated output are read-only.** Never change translation-fuzzy status (e.g. gettext `#, fuzzy`) without an explicit repository rule or human instruction — general i18n knowledge never overrules the local workflow. Change translation files only per the project workflow, and treat generated outputs (e.g. build or asset dirs such as `public/`) as read-only unless the user explicitly asks otherwise. Never "repair" a generated file or fuzzy entry just because it looks surprising from general knowledge.
 - **Classify the change before judging it.** UI, API, auth, persistence, migrations, jobs, integrations, config, and feature flags fail in different ways. Build a small risk map up front and let it drive which checks, probes, and conditional lanes matter; see `references/risk-mapping.md`.
 - **Use the checklist as a floor, not a ceiling.** `moes` has explicit gates so the pass is complete and repeatable, but no checklist is exhaustive. Generate bug hypotheses from the actual diff, the changed invariants, and the system boundaries; use the references to structure your thinking, not replace it.
 - **A finding blocks only if it survives challenge.** Before any issue gates the verdict, it must have a concrete, reachable trigger — not a theory or an aesthetic objection. Challenging your own findings keeps the punch list small and trustworthy, so the user doesn't have to re-verify it by hand; see `references/findings-lifecycle.md`.
@@ -141,8 +145,9 @@ Establish exactly what `moes` is hardening and confirm it starts from a known-go
    state transitions, persistence/cache boundaries, async points, auth/trust
    boundaries, and rollout/config toggles that changed.
 11. **Compose the evidence pack.** Follow `references/evidence-pack.md`
-   exactly. That reference is the canonical schema and output discipline for
-   the `Evidence Pack`; do not create a smaller competing definition here.
+    exactly. That reference is the canonical schema and output discipline for
+    the `Evidence Pack`; do not create a smaller competing definition here.
+12. **Snapshot the review start.** Record the original `HEAD`, the original working-tree status, the original combined diff (plus its hash), and the list of protected feature files and feature hunks. This snapshot is the reference for every later change: any applied fix is diffed against it, and any unauthorized or unexpected alteration stops the run (revert or report explicitly, never silently continue).
 
 Gate: you have a clear diff, a language list, a stack-context snapshot, a project context capsule, a risk
 map, a pinned intent (or an explicit note that none exists), a composed
@@ -176,6 +181,7 @@ Apply idiomatic, language- and framework-specific best practices to the changed 
 - For cross-language design/code smells that often survive language-specific guides, consult `references/universal-quality.md` and apply only the safe, clearly-improving fixes.
 - Apply the rules to the diff. Prefer the smallest change that brings the code in line; do not rewrite working code wholesale.
 - When a best-practice rule conflicts with an established project convention, the convention wins — note the conflict instead of fighting it.
+- Phases 1–3 are bound by classify-before-you-change and the protected feature-diff: no removal, rename, or behavioral alteration of feature-diff code on interpretive, redundancy, or elegance grounds. Preference-level and optional improvements become findings, not edits; uncertain removals become `Decide`/`Investigate`, never silent deletions.
 
 Gate: changed code follows the relevant idioms, or deviations are noted with reasons.
 
@@ -184,7 +190,7 @@ Gate: changed code follows the relevant idioms, or deviations are noted with rea
 Improve clarity and remove unnecessary complexity in the changed code.
 
 - Follow `references/simplify.md`. It carries the equivalence test that keeps this phase safe without a test gate, the clarity ethos, and the local-simplification catalog.
-- Goal is readability and removing accidental complexity — flatten needless nesting, name things well, drop dead code — **without** changing behavior or over-compressing into clever one-liners.
+- Goal is readability and removing accidental complexity — flatten needless nesting, name things well, drop dead code — **without** changing behavior or over-compressing into clever one-liners. "Dead code" here means code proven unreachable or unreferenced (no test, caller, hook, or runtime flow depends on it) — never feature-diff logic removed on interpretive grounds; when reachability is uncertain, keep the code and file a finding instead.
 - This is the middle improve rung: language idioms are Phase 1, structural change is Phase 3. Phase 2 is *local* clarity — single-location rewrites whose equivalence you can see. Anything you'd need the tests to prove belongs in Phase 3.
 
 Gate: the diff is as simple as it can be while staying clear.
@@ -258,11 +264,13 @@ Use the Phase-0 risk map and project context capsule to decide which conditional
   `Evidence Pack`. Blind discipline: pass only `title + description + code` per challenged finding — never the originating lane's reasoning or evidence text. On hosts without subagents, run the same challenger criteria
   inline as a separate pass after the reverse audit (order for the whole back half: consolidate, then sharded verification, then reverse audit, then challenger).
 - Auto-fix contract: only apply findings whose fix is safe, localized,
-  low-blast-radius, and realistically verifiable in Phase 6. Do not auto-fix
+  low-blast-radius, and realistically verifiable in Phase 6. Every applied fix must first be classified as a proven defect (not a spec ambiguity, preference, or optional improvement) with all of: exact file and location, concrete reproducible trigger, observed fault or violated invariant, origin (`new` / `surfaced` / `pre-existing`), the violated spec rule / repository guideline / test, the minimal patch, and the test or probe that will verify it. A style preference, general best practice, suspicion, or interpretation difference is never enough for a fix. Do not auto-fix
   architecture boundary changes, rollout-plan changes, legal/policy wording,
-  reviewer-facing submission metadata, or speculative hardening that lacks a
+  reviewer-facing submission metadata, translations/fuzzy status, generated outputs,
+  or speculative hardening that lacks a
   concrete triggered defect. Those stay as `Plan`, `Decide`, or
   `Investigate` findings unless the user explicitly broadens scope.
+- Fix preview and post-fix guard: before applying a fix, state a compact preview (file, lines, finding, evidence, violated rule, exact change, verification command, remaining uncertainty). Apply only when the fix is high-confidence with a concrete trigger — material uncertainty means report, not edit. After each fix, diff before vs after, confirm only the intended lines changed, rerun the relevant test/probe, and check that no feature logic, translation status, DOM-hook, or config contract silently disappeared. On any unexpected diff, stop — apply no further fixes until it is resolved (revert or explicit report, never silently continue).
 - Escalation hooks: keep specialty lanes orchestration-focused and route them
   outward instead of embedding their full checklists here. Use
   `error-handling-review.md` for retry/recovery-heavy flows,

@@ -176,6 +176,7 @@ rather than deleted.
 
 Decision flow:
 
+0. Classify first: proven defect, spec ambiguity, personal preference, or optional improvement. Only a proven defect (reachable trigger plus violated invariant) can become `Fix`. A spec ambiguity is `Decide`, a plausible-but-unproven diagnosis is `Investigate`, a systemic issue is `Plan`, and a preference or optional improvement is never a `Fix` — interpretation differences are reported, not edited away.
 1. Is the issue a verified localized defect in changed code? If yes, `Fix`.
 2. Does it require broad architecture or policy change beyond the diff? If
    yes, `Plan`.

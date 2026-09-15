@@ -193,3 +193,25 @@ test('moes phase 6 execution discipline holds', async () => {
   assertIncludesIgnoringCase(playwright, '--list');
   assertIncludesIgnoringCase(playwright, 'discovery only');
 });
+
+test('moes regression guards hold', async () => {
+  const skill = await read('skills/moes/SKILL.md');
+  const lifecycle = await read('skills/moes/references/findings-lifecycle.md');
+  const spec = await read('skills/moes/references/spec-conformance.md');
+  const context = await read('skills/moes/references/project-context.md');
+
+  for (const phrase of [
+    'spec hierarchy',
+    'feature-diff as protected',
+    'Classify before you change',
+    'Local workflow beats general knowledge',
+    'Snapshot the review start',
+    'Fix preview and post-fix guard',
+  ]) {
+    assertIncludesIgnoringCase(skill, phrase);
+  }
+
+  assertIncludesIgnoringCase(lifecycle, 'Classify first');
+  assertIncludesIgnoringCase(spec, 'never treat existing feature-diff logic as removable');
+  assertIncludesIgnoringCase(context, 'generated files are read-only');
+});

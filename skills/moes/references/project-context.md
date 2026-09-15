@@ -58,7 +58,7 @@ Ask these against the diff:
 - Does it respect the repo's domain invariants, including product-specific calculations, workflow states, tenant boundaries, rollout compatibility, or data retention rules?
 - Does it follow the repo's test style and verification expectations for this kind of risk?
 
-When project context conflicts with generic best practices, project context wins unless it would create a verified correctness, security, or legal/compliance problem. Report the conflict instead of silently overriding it.
+When project context conflicts with generic best practices, project context wins unless it would create a verified correctness, security, or legal/compliance problem. Report the conflict instead of silently overriding it. This applies in particular to translation and codegen workflows: local fuzzy/translation status rules and generated-output ownership always beat general textbook knowledge — fuzzy entries and generated files are read-only unless the repo docs or the user say otherwise.
 
 ## Durable learning
 
