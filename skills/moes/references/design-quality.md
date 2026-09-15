@@ -29,7 +29,9 @@ Ask these about the changed code:
 
 - What knowledge did the diff hide, expose, duplicate, or scatter?
 - What must a caller know now to use the changed module correctly: types,
-  ordering, invariants, errors, config, performance, or side effects?
+  ordering, invariants, errors, config, performance, or side effects? Name the
+  specific interface fact that leaked or grew (type / invariant / ordering /
+  error mode / config / performance) — findings must cite it, not just "interface grew".
 - Did the interface become deeper by hiding meaningful implementation detail
   behind a smaller surface, or shallower by adding pass-through ceremony?
 - Did the change reduce cognitive load, or did it move complexity to another
@@ -176,7 +178,8 @@ Each `Design Quality Notes` item should carry:
   `Pattern Fit / <pattern name>`
 - evidence: what the diff actually did
 - mechanism: how complexity, knowledge, coupling, locality, or change
-  amplification changed
+  amplification changed — including which interface fact (type / invariant /
+  ordering / error mode / config / performance) the caller must now know
 - trade-off: cost, drawback, or when not to apply this advice
 - disposition: `report`, `finding`, `defer`, or `drop`
 
@@ -193,3 +196,9 @@ Reuse/duplication (Q1) and consistency/clarity (Q3) belong to
 `codebase-fit.md` — do not re-walk them. Altitude findings need the same
 mechanism-level evidence as any design risk: what the right layer would be,
 why this depth is wrong for it, and the trade-off of moving it.
+
+Testability pre-check (apply to changed modules before judging depth):
+
+- **Accept dependencies, don't create them** — `processOrder(order, paymentGateway)` tests clean; `processOrder(order) { const gateway = new StripeGateway(); }` does not.
+- **Return results, don't produce side effects** — `calculateDiscount(cart): Discount` tests clean; `applyDiscount(cart): void { cart.total -= discount; }` does not.
+- **Small surface area** — fewer methods = fewer tests needed; fewer params = simpler setup. Ask the deepening questions: fewer methods? simpler params? more complexity hidden?

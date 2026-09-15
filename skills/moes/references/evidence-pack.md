@@ -8,6 +8,7 @@ risk is, and what evidence exists before deeper review begins.
 
 - diff scope
 - base branch and comparison point
+- commit list (`git log <base>..HEAD --oneline`)
 - changed surfaces and subsystem clusters
 - language and framework detection
 - stack-context snapshot (single version profile shared by all later lanes — see below)
@@ -74,6 +75,9 @@ Write it as a compact ordered flow, for example:
 - emits event
 
 ## Hotspots
+
+Scope via `git log --oneline` first: recently often-changed areas carry extra
+weight; when changes are scattered with no clear hot spot, widen the net.
 
 Mark any of these when present:
 

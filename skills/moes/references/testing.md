@@ -133,6 +133,14 @@ them; don't reach for E2E what a unit test could pin precisely.
 ## Anti-patterns
 
 - Asserting on implementation details or internal call counts.
+- Tautological tests: the expected value is recomputed the same way as the code
+  (`expect(add(a, b)).toBe(a + b)`, a hand-derived snapshot mirroring the
+  implementation) so the test passes by construction. Expected values must come
+  from an independent source: a known-good literal, a worked example, the spec.
+- Horizontal slicing: writing all tests first, then all implementation — bulk
+  tests verify imagined behavior. Work in vertical tracer bullets instead: one
+  test → one implementation → repeat, each test responding to what the last
+  cycle taught you.
 - Over-mocking — mocking types you own, or stubbing so much the real code never
   runs.
 - Shared mutable state or order dependence between tests.
@@ -159,6 +167,9 @@ them; don't reach for E2E what a unit test could pin precisely.
 - [ ] No vacuous tests, no coverage-chasing, no logic in test bodies.
 - [ ] Unit tests fast; slow E2E reserved for flows that earn it.
 - [ ] Test type matches the risk; bug fixes get a regression test where practical.
+- [ ] No tautological assertions; expected values come from an independent source.
+- [ ] Coverage gaps name the seam (module + interface) — no test on an
+  unconfirmed seam without recording it as a finding.
 - [ ] If a QA intent draft exists, changed tests cover or consciously defer the
       high-value scenarios.
 - [ ] API tests validate body/shape/side effects when those are the changed

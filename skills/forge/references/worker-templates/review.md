@@ -35,12 +35,13 @@ You are a read-only review worker. Inspect and challenge; you do not implement.
 
 ## Expected output
 
-Return a findings list. Each finding:
+Return a findings list (under 400 words per worker). Each finding:
 
 - severity (Critical / Important / Minor)
 - file and line
 - one-sentence summary
 - concrete failure scenario / why it matters
+- violated standard (file + rule) or spec line quoted, plus the diverging hunk quoted
 - a directional fix suggestion (do not apply it)
 
 Then list confirmed strengths and any residual risks you could not fully

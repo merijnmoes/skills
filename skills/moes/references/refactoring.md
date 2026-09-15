@@ -9,24 +9,38 @@ Local clarity fixes — flattening with guard clauses, deleting dead code, namin
 
 ## Architecture vocabulary
 
-Use these terms consistently when naming structural findings:
+Use these terms exactly when naming structural findings — don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point:
 
 - **Module** — anything with an interface and an implementation: function,
-  class, package, subsystem, or slice.
+  class, package, subsystem, or slice. *Avoid*: unit, component, service.
 - **Interface** — everything a caller must know to use a module correctly:
   types, invariants, ordering, error modes, required config, and performance
-  expectations.
-- **Implementation** — the code inside a module.
+  expectations. *Avoid*: API, signature (too narrow — they refer only to the type-level surface).
+- **Implementation** — the code inside a module. Distinct from **Adapter**: a thing can be a small adapter with a large implementation (a Postgres repo) or a large adapter with a small implementation (an in-memory fake). Reach for "adapter" when the seam is the topic; "implementation" otherwise.
 - **Depth** — leverage at the interface. A **deep** module hides substantial
   behavior behind a small interface; a **shallow** module exposes an interface
   nearly as complex as its implementation.
 - **Seam** — where a module's interface lives; a place behavior can vary
-  without editing the caller.
-- **Adapter** — a concrete implementation satisfying an interface at a seam.
+  without editing the caller. Where to put the seam is its own design decision, distinct from what goes behind it. *Avoid*: boundary (overloaded with DDD's bounded context).
+- **Adapter** — a concrete implementation satisfying an interface at a seam. Describes *role* (what slot it fills), not substance (what's inside).
 - **Leverage** — what callers get from depth: more behavior per interface fact
   they must learn.
 - **Locality** — what maintainers get from depth: change, bugs, knowledge, and
   verification concentrate in one module.
+
+Relationships:
+
+- A **Module** has exactly one **Interface** (the surface it presents to callers and tests).
+- **Depth** is a property of a **Module**, measured against its **Interface**.
+- A **Seam** is where a **Module**'s **Interface** lives.
+- An **Adapter** sits at a **Seam** and satisfies the **Interface**.
+- **Depth** produces **Leverage** for callers and **Locality** for maintainers.
+
+Rejected framings:
+
+- **Depth as ratio of implementation-lines to interface-lines**: rewards padding the implementation. Use depth-as-leverage instead.
+- **"Interface" as the TypeScript `interface` keyword or a class's public methods**: too narrow — interface here includes every fact a caller must know.
+- **"Boundary"**: overloaded with DDD's bounded context. Say **seam** or **interface**.
 
 Prefer this vocabulary over vague claims like "cleaner architecture" or
 "easier to maintain." If `CONTEXT.md` defines domain terms for the changed
@@ -59,9 +73,10 @@ DRY is about a single source of truth for a piece of *knowledge*, not about elim
   ports are cost today for a future that may never arrive.
 
 ## When NOT to refactor
-- **Don't refactor purely to enable testing.** If code is hard to test, the design is telling you something — fix the design (inject the dependency, split the responsibility), don't bolt on seams just to reach private state.
+- **Don't refactor purely to enable testing.** If code is hard to test, the design is telling you something — fix the design (inject the dependency, split the responsibility), don't bolt on seams just to reach private state. A deep module may still have **internal seams** (private to its implementation, used by its own tests) alongside the **external seam** at its interface — that is fine. What is not fine is exposing internal seams through the external interface or adding test-only hooks past it.
 - **Don't add speculative flexibility** for imagined future needs (YAGNI). Generality you don't need today is cost you pay today.
 - **Don't bundle unrelated cleanup** into a feature change. It bloats the diff, muddies review, and entangles a revert. Note it and leave it.
+- **Restructuring the feature's own placement is not "unrelated cleanup."** Moving *this diff's* logic to the module/seam/layer where it belongs is feature work, not cleanup: flag it always, fix it in Phase 3 where localized and test-gated, and where it changes the diff's shape carry it as NEEDS REVISION with a placement sketch (cluster rule below) instead of broadly restructuring inside hardening. Only restructuring *untouched neighbors* is out of scope.
 - **Don't refactor untested code** without first establishing a safety net (see the discipline above).
 - **Don't turn `moes` into repo-wide architecture review.** If the changed
   code reveals a broader deepening opportunity outside the diff, record it as a
@@ -98,10 +113,26 @@ Separate from "is there a pre-existing smell worth fixing" (above), ask the shar
 - **Magic obscuring simple structure** — clever indirection, reflection, or over-generalization the change introduced where a direct, plain implementation would read clearer.
 - **Type-boundary cleanliness regression** — the change adds a cast, `any`/`unknown`, unnecessary optionality, or a silent fallback (`?? default`, a swallowed branch) that papers over an unclear invariant instead of making the boundary explicit. Flag when the obscured contract makes the code harder to reason about — the language idioms in `best-practices/typescript.md`/`python.md` catch the lint-level cases; this lane is for the *design* smell where the fallback hides what the real invariant should be (ties to `best-practices/general-oop.md`).
 
+**Cluster rule — patched in, not designed in.** When ≥2 signals from the list
+above (or 1 signal plus a Q2 bandaid verdict) cluster in one diff, escalate them
+as one coherent finding instead of scattered notes: title it "Feature X patched
+in, not designed in" and carry the mechanism — knowledge scattered over N
+places (count them), the next likely variant touching M files (count them), and
+the cheaper alternative as a concrete placement sketch (which module/seam should
+host this, and why). Severity follows the risk lane: yellow/red → `blocking`
+(NEEDS REVISION until restructured or the user explicitly accepts the debt);
+green → non-blocking `Plan` for later. Either way it stays visible — silently
+dropping a cluster is forbidden (cf. judgement-not-skipping in `SKILL.md` and
+downgrade-rather-than-delete in `findings-lifecycle.md`). A single isolated
+signal keeps its normal per-signal handling; the cluster rule only fires on
+accumulation.
+
 **Scope restraint — read this so the lane doesn't overreach.** This is the *restrained* version of an aggressive structural review, deliberately scoped to fit `moes`:
 - It is **diff-scoped**. Judge the structure the change touched or added. Do **not** flag (or rewrite) untouched code that merely happens to be near the diff — that is scope creep and a common way to introduce regressions.
 - **Behavior preservation and minimality still govern.** The point is to catch *degradation the change caused*, not to mandate ambitious rewrites or treat "I can imagine a cleaner architecture" as a blocker. "Design over working code" is explicitly **not** the `moes` posture.
 - A structural-regression finding **blocks only if it survives `findings-lifecycle.md`** — name the concrete maintenance hazard (the future bug, the path that's now hard to change safely), not an aesthetic preference. Clear, low-risk regressions can be fixed in Phase 3; the rest are flagged with severity and confidence and left for the user.
+- **The feature's own placement is in scope; neighbors are not.** Judging whether *this change's* logic sits in the right module/seam/layer is the lane's core job (see the "not unrelated cleanup" bullet under When NOT to refactor). Rewriting untouched neighboring code to match is scope creep either way.
+- **The bar is no *new* patchwork.** This diff must not leave the structure worse than it found it. Pre-existing mess the feature touches may be named as `surfaced` context at most — never as a requirement.
 
 ## Assessment output
 Produce a short assessment, not a wall of text. List each candidate with its **priority** (Critical/High/Nice/Skip), a **DECISION** (fix now / defer / skip), and a one-line reason. Then act only on the "fix now" items.
@@ -112,7 +143,19 @@ deepening opportunity:
 - **Module / files** — where the friction appeared
 - **Problem** — what shallow interface, seam leak, or locality loss the diff
   exposed
+- **Dependency category** — in-process (pure computation, deepen freely) /
+  local-substitutable (local stand-in exists, seam stays internal) /
+  remote-owned (own service across network: port + production/test adapters) /
+  true-external (third-party: injected port, mock adapter in tests)
+- **Test strategy** — replace, don't layer: new tests at the deepened module's
+  interface asserting observable outcomes; old shallow-module unit tests deleted
+  once the interface tests exist
 - **Why not now** — why it is broader than final hardening
 - **Next action** — `Plan`, `Investigate`, or `Decide`
+
+If the user later wants to pursue the deferred deepening, explore alternative
+interfaces first (e.g. parallel sketches optimized for minimal interface vs
+flexibility vs the common caller) and compare them on depth, locality, and
+seam placement before committing — do not do this exploration inside `moes`.
 
 It is a valid — and common — outcome to conclude **"no refactor needed."** Say so plainly and move on. Reporting clean code honestly is more useful than inventing changes.

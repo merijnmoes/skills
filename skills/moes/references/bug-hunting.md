@@ -20,6 +20,15 @@ it does **not** execute the final verification plan (`verify.md`), and it does
 - Coverage is evidence, not proof.
 - A bug hypothesis is useful only if you can turn it into a **reachable
   scenario**, an invariant, or a deterministic reproduction.
+- **No hypothesis without a loop.** Name one command first (test, curl, harness,
+  focused flow) that already went red on *this* symptom at least once: red-capable
+  (catches exactly the reported symptom, not "doesn't crash"), deterministic,
+  seconds-fast, agent-runnable. Catching yourself theorizing before that command
+  exists means stop: build the loop first.
+- On green-lane diffs a light probe suffices, but always record it (loop or an
+  explicit why-not per `SKILL.md` judgement-not-skipping) — silently skipping is
+  forbidden. A doubtful case becomes an `Investigate` note, never a direct
+  `blocking` finding (trigger test in `findings-lifecycle.md` still gates).
 - Prefer the **smallest probe that can falsify your confidence**:
   unit/integration test, a focused harness, a repeated command, or a single
   browser flow.
@@ -27,6 +36,12 @@ it does **not** execute the final verification plan (`verify.md`), and it does
   `moes`.
 
 ## 1. Generate bug hypotheses from the diff
+
+Generate 3–5 ranked, falsifiable hypotheses before testing any of them
+(single-hypothesis anchoring is the failure mode). Format each as: "If X is the
+cause, then changing Y makes the bug disappear / changing Z makes it worse."
+Without a prediction it is a vibe: sharpen or discard. Cap at 3–5: completeness
+without noise.
 
 Look for the places where bugs usually hide:
 
@@ -126,7 +141,8 @@ You can borrow that discipline even in an ordinary `moes` run:
   still present but easier to replay.
 
 When you find a bug, capture the **minimal reproducer** first; only then widen
-the fix.
+the fix. Minimize to load-bearing: strip the repro one element at a time until
+every remaining element is load-bearing — that becomes the regression test.
 
 ## 5. Playwright guidance
 
@@ -150,6 +166,11 @@ You probably won't have deterministic simulation tooling in an ordinary
 `moes` run. You can still borrow the parts that matter:
 
 - **Control what you can** — time, randomness, fixtures, dependency responses.
+- **Don't chase 1% flakes** — raise the reproduction rate (loop 100×, stress,
+  parallelize, narrow timing windows, inject sleeps) until the bug is debuggable.
+- **Perf: measure first, fix second** — establish a baseline (timing harness,
+  profiler, query plan), then bisect; logs are usually the wrong tool for
+  performance regressions.
 - **Assert continuously** — bake invariants into tests/harnesses instead of
   checking only at the end.
 - **Probe weird states on purpose** — retries during partial success, stale

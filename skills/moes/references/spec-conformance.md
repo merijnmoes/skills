@@ -7,10 +7,11 @@ Used in `moes` Phase 0 (pin the spec) and Phase 4 (check the diff against it). A
 Establish *what was asked for* before you can check the diff against it. Look in this order and stop at the first usable source:
 
 1. **Issue references in commit messages** — `#123`, `Closes #45`, `Fixes ORG-12`, GitLab `!67`. If found and `gh` is available, fetch the issue body with `gh issue view <n>`. This is the strongest signal because it is the request in the author's own words.
-2. **A spec/PRD file** under `docs/`, `specs/`, `.scratch/`, or similar, whose name matches the branch or feature.
-3. **The branch name** as a weak hint (`fix/login-rate-limit` tells you the intent even with no doc).
-4. **Ask the user** — if 1–3 turn up nothing, ask for a one-line statement of intent or a path to the spec. One question, then move on.
-5. **No spec at all** — if the user has none either, record *"no external spec available; internal-consistency check only"* and fall back to the lighter pass below. Do not block on a missing spec, and do not invent acceptance criteria the user never stated.
+2. **A path the user passed as an argument** — e.g. `/moes <spec-path>`. Use it directly without further searching.
+3. **A spec/PRD file** under `docs/`, `specs/`, `.scratch/`, or similar, whose name matches the branch or feature.
+4. **The branch name** as a weak hint (`fix/login-rate-limit` tells you the intent even with no doc).
+5. **Ask the user** — if 1–4 turn up nothing, ask for a one-line statement of intent or a path to the spec. One question, then move on.
+6. **No spec at all** — if the user has none either, record *"no external spec available; internal-consistency check only"* and fall back to the lighter pass below. Do not block on a missing spec, and do not invent acceptance criteria the user never stated.
 
 Record the pinned intent (and its source) so Phase 4 can cite it.
 
@@ -18,7 +19,7 @@ Record the pinned intent (and its source) so Phase 4 can cite it.
 
 Compare the diff against the pinned intent. Report findings in three buckets:
 
-1. **Missing or partial requirements** — something the spec asked for that the diff does not deliver, or delivers only part of. Quote the spec line and name what is absent. **This is a blocking finding → NEEDS REVISION.** `moes` *flags* the gap; it does **not** implement the missing feature itself — closing it is new feature work, outside a QA pipeline's remit.
+1. **Missing or partial requirements** — something the spec asked for that the diff does not deliver, or delivers only part of. Quote the spec line and name what is absent. **This is a blocking finding → NEEDS REVISION.** `moes` *flags* the gap; it does **not** implement the missing feature itself — closing it is new feature work, outside a QA pipeline's remit. Shape the follow-up as a spec fragment: problem, solution, user stories, implementation decisions without file paths (they go stale fast), testing decisions (highest seam possible, fewest seams), out of scope.
 2. **Scope creep** — behavior in the diff that the spec did not ask for. This is the spec-side mirror of the minimality principle. Usually non-blocking (flag it, and note if it carries its own risk or maintenance cost), but escalate if the unrequested behavior is risky, changes a public contract, or buries the actual change.
 3. **Implemented-but-wrong** — a requirement that looks handled but where the implementation doesn't actually satisfy what was asked (off-by-one against the stated rule, wrong default, the happy path only, a misread of the acceptance criteria). Quote the spec line and the diverging code. Blocking if it means the feature doesn't meet its stated bar.
 

@@ -22,7 +22,15 @@ Build one compact inventory of what the diff did to the system's shape:
 
 The Map is an overview for the human reviewer, not a second findings list.
 Findings point into it; it never duplicates the `Finding Set`. Attach it to
-the `Evidence Pack` and embed it in the final report overview.
+the `Evidence Pack` and embed it in the final report overview. For each
+candidate carry: files, problem (friction in plain language), solution sketch,
+benefits in leverage/locality/testability terms, a before/after sketch, and a
+recommendation strength (`Strong` / `Worth exploring` / `Speculative`); close
+with one Top recommendation and why. Use domain vocabulary from the context
+capsule and architecture vocabulary from `refactoring.md`. If a candidate
+contradicts an existing ADR, surface it only when the friction justifies
+reopening the ADR, marked clearly (e.g. "contradicts ADR-0007, but worth
+reopening because…").
 
 ## Lane rules
 

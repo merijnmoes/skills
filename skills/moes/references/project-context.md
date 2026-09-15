@@ -23,7 +23,13 @@ Keep it short: usually 6-12 bullets. Prefer concrete rules over broad descriptio
 Read only what exists and is relevant to the diff:
 
 1. Root and nearest instruction files: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/*`.
-2. Project docs that describe architecture, domain, testing, contributing, or release process: `README*`, `CONTRIBUTING*`, `docs/architecture*`, `docs/testing*`, `docs/domain*`, `docs/release*`, `docs/adr/*`.
+2. Domain glossary first: `CONTEXT.md` (plus `CONTEXT-MAP.md` when the repo has
+   multiple contexts) and `docs/adr/*` in the touched area. Respect ADRs unless
+   a verified trigger justifies reopening one. Challenge glossary conflicts
+   immediately ("glossary defines X as A, but the diff/user means B — which is
+   it?"), sharpen fuzzy terms with concrete edge-case scenarios, and
+   cross-check stated behavior against the code ("you said partial cancellation
+   is possible, but the code cancels entire orders — which is right?").
 3. Tooling config: package/build manifests, formatter/linter/typecheck config, test runner config, CI workflows, codegen config.
 4. Adjacent code and tests around the changed files.
 5. Existing implementations of similar behavior elsewhere in the repo.
@@ -56,7 +62,7 @@ When project context conflicts with generic best practices, project context wins
 
 ## Durable learning
 
-If `moes` discovers a useful project rule that is not documented, do not silently write it into standing instructions during the pipeline. Note it in the retro and ask whether to save it to `CLAUDE.md` / `AGENTS.md` or another project doc. The user owns durable project policy.
+If `moes` discovers a useful project rule that is not documented, do not silently write it into standing instructions during the pipeline. Note it in the retro and ask whether to save it to `CLAUDE.md` / `AGENTS.md` or another project doc. The user owns durable project policy. `CONTEXT.md` is glossary-only (no implementation details), created lazily when the first term resolves. Offer an ADR only when all three hold: hard to reverse, surprising without context, and the result of a real trade-off — otherwise skip it.
 
 ## Quick checklist
 

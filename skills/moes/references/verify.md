@@ -142,7 +142,8 @@ forward explicitly into the validation gate.
 
 When summarizing the ledger, be explicit about which entries are **directly
 verified**, which are only **indirectly supported**, and which remain
-**not-run/environment-blocked**.
+**not-run/environment-blocked**. `flaky`/`infra` never counts as proof — repeat
+that verdict at the summary rather than letting absence read as green.
 
 When post-deploy monitoring was relevant, record whether it was `run and healthy`, `run with warnings`, or `not run because no environment` rather than collapsing those cases into generic verification success.
 
@@ -153,6 +154,12 @@ Initial run is attempt 1. You get at most 2 fix attempts (attempts 2 and 3 total
 Don't just note "saw a failure." Capture it in a replayable way: record the
 exact command, route, fixture, input, or seed that triggered it; minimize the
 reproducer if you can; add or improve a regression test when practical.
+
+Debug hygiene: tag every temporary debug log with a unique prefix (e.g.
+`[DEBUG-xxxx]`) so cleanup is one grep; delete throwaway harnesses when done.
+Redact shown output (`<REDACTED>`, secrets via env vars, generic queries only).
+Fix order on a real bug: capture trigger → minimize → regression test red →
+fix → focused probe plus suite green → re-run the original loop.
 
 Per attempt:
 1. Classify the failure first: `fail` vs `flaky` vs `infra` per

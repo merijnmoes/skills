@@ -27,6 +27,10 @@ The user should not need to reconstruct:
   are no evidence-backed examples worth preserving.
 - **Reviewer-ready, not diary-like.** Keep chronology out unless it matters for
   risk or debugging.
+- **Reference, don't paste.** Point at specs, issues, artifacts, and commits by
+  path or URL instead of duplicating their content. Scratch (harnesses, HTML
+  sketches, dumps) goes to the OS temp dir, never into the repo.
+- **Redact.** Strip secrets, tokens, and PII from everything shown.
 - **Separate facts from confidence from gaps.** What you know, how sure you are,
   and what you could not verify are different things.
 - **Don't bury the user.** Include everything important, but compress repeated
@@ -73,7 +77,8 @@ contract.
 - **Findings** — split blocking from non-blocking items. For every finding,
   include severity, confidence, action type, concrete trigger or violated spec
   line, and current status. Order findings by business impact, not by phase or
-  file order.
+  file order. Keep blocking Standards and blocking Spec findings in separate
+  sub-lists and close with a one-line per-axis summary (`Standards: N, worst X / Spec: M, worst Y`); do not pick a single winner across axes.
 - **Considered and dismissed** — list Finding Set members dropped after challenge or verification: title plus one-line reason each, ex-blockers first then by severity and confidence, maximum 5. Omit when empty.
 - **What went right** — include this only for meaningful examples from `Design
   Quality Notes`. Tie each note to a changed surface and explain the mechanism:
@@ -98,7 +103,13 @@ contract.
 - **Recommended next step** — tailor it to the verdict. For `READY TO SHIP`,
   suggest commit/PR framing, reviewer attention points, and any rollout note
   worth carrying forward. For `NEEDS REVISION` or `BLOCKED`, state the exact
-  fixes required before rerunning `moes`.
+  fixes required before rerunning `moes`. Shape multi-part `Plan` follow-ups as
+  tracer-bullet slices (each a vertical, demoable behavior, single-context
+  sized) with blocking edges — unblocked slices first (the frontier). A wide
+  mechanical refactor is the exception: sequence it expand–contract (new form
+  beside old → migrate in batches → delete old). Refer to specs/issues/artifacts
+  by name and path instead of pasting them; name suggested skills or lanes for
+  the follow-up.
 - **Threat-model escalation** — if the run triggered a red-lane trust-boundary
   escalation, say whether it produced a blocking finding, a follow-up plan, or
   no additional action.

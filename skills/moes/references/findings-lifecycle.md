@@ -160,8 +160,17 @@ After verification, assign one next action:
 |--------|----------|------------------------|
 | **Fix** | High-confidence, localized defect with a clear safe fix inside the finalized diff | Fix it now, then re-run the relevant verification. |
 | **Investigate** | Plausible issue but missing evidence, unclear cause, or environment-dependent behavior | Surface as non-blocking unless the unknown itself creates unacceptable risk. State the first concrete check. |
-| **Plan** | Systemic architecture, migration, cross-module, or policy work that exceeds moes scope | Do not refactor broadly in `moes`; report as follow-up or `NEEDS REVISION` if it blocks the current change. |
-| **Decide** | Product, domain, security, release, or policy trade-off needing human judgment | Surface the decision point. Do not invent policy. |
+| **Plan** | Systemic architecture, migration, cross-module, or policy work that exceeds moes scope | Do not refactor broadly in `moes`; report as follow-up or `NEEDS REVISION` if it blocks the current change. Multi-part follow-ups become tracer-bullet slices with blocking edges (fog-test: ticket only what is sharply statable now; refer by name, not bare ids). |
+| **Decide** | Product, domain, security, release, or policy trade-off needing human judgment | Surface the decision point as `needs user decision` with the concrete question plus your recommended answer. Do not invent policy. |
+
+Work open `Decide` points as frontier rounds: ask the whole frontier in one
+round (numbered questions with a recommended answer each), look up facts
+yourself instead of asking the user for them, then recompute the frontier until
+empty. Interrupt the run inline only when the verdict genuinely cannot proceed
+without the answer; otherwise collect into the final report. When unsure whether
+a `Decide` point blocks, show it as blocking-with-a-question-mark rather than
+dropping it — doubtful cases surface per the trigger-test discipline, downgraded
+rather than deleted.
 
 Decision flow:
 
@@ -306,6 +315,7 @@ Outputs:
 - short verdict rationale
 - evidence summary
 - blocking findings
+- blocking findings per axis (Standards vs Spec) plus worst issue within each axis — do not merge or rerank across axes
 - non-blocking / deferred findings
 - report-facing design strengths and design-risk notes
 - verification coverage summary

@@ -1,6 +1,6 @@
 ---
 name: moes
-description: Use when a code change is functionally complete and needs a final hardening review before shipping, or when the user asks for moes.
+description: Use when reviewing changes since the base branch along Standards (repo fit) vs Spec (intent) — branch, PR, work-in-progress, or "review since X" — or when a functionally complete change needs final hardening before shipping, or when the user asks for moes.
 ---
 
 # Moes
@@ -39,6 +39,12 @@ Users request a review with `/moes` for the current diff, for example:
 `against <branch>` overrides the comparison base. `/forge:build` runs this
 same skill when its workflow reaches the Review phase.
 
+Invocation routing: broad redesign explorations (alternative interfaces,
+repo-wide deepening, wayfinding, interactive grilling) run only on explicit
+user request — `moes` never escalates into them on its own; it records them as
+`Plan`/`Decide` follow-ups instead. `moes` references stay addressable by name
+so other skills (e.g. `forge`) can invoke individual slices.
+
 ## Operating stance
 
 - Prefer the **smallest justified improvement** to the changed code. Do not
@@ -50,6 +56,10 @@ same skill when its workflow reaches the Review phase.
 - Prefer concrete proof, observed behavior, and reachable triggers over
   narrative confidence.
 - `moes` is a separate public skill. When `/forge:build` reaches its Review phase, it loads this skill.
+- **Missing-tool fallbacks share one shape.** Whenever a dependency is absent
+  (base ref, `gh`, docs MCP, browser target, tracker): say so, cap confidence
+  or mark `deferred by environment`, and never block or silently pass on the
+  gap.
 
 ## Phase map
 
@@ -80,7 +90,7 @@ Read these before starting. They explain *why* the pipeline is shaped the way it
 - **Never commit — the user owns git.** This pipeline ends at the validation verdict and a summary. Do not run `git commit`, `git push`, `gh pr create`, or any other git/PR write — ever, under any circumstances, even when the verdict is READY TO SHIP and even if asked to "just wrap it up". Staging and committing is the user's decision alone; you may only *suggest* the exact command for them to run. (Consequence: since the modifying phases edit the working tree in place but nothing is committed, the user's own pre-moes commit is the only clean rollback point — hence the Phase 0 commit precondition.)
 - **Be project-aware.** Read the repo's standing instructions, architecture docs, local patterns, tooling conventions, and domain rules before applying any "best practice". Build a small project context capsule and carry it through the pipeline; see `references/project-context.md`.
 - **Fit the codebase, not just correctness.** A change can be locally correct yet wrong for *this* repo — duplicating an existing helper, adding a second way to do something, or ignoring an established pattern. Reuse prior art and match surrounding conventions; see `references/codebase-fit.md`.
-- **Build the right change, not just a correct one.** Code can be clean, idiomatic, and correct yet not be *what was asked for* — a requirement left half-built, a misread of the spec, or behavior nobody requested. Conformance to the originating intent is its own check, distinct from quality; see `references/spec-conformance.md`.
+- **Build the right change, not just a correct one.** Code can be clean, idiomatic, and correct yet not be *what was asked for* — a requirement left half-built, a misread of the spec, or behavior nobody requested. Conformance to the originating intent is its own check, distinct from quality; see `references/spec-conformance.md`. Clean but wrong → Standards pass, Spec fail. Right intent but breaks conventions → Spec pass, Standards fail. Report the two axes separately so one cannot mask the other.
 - **Classify the change before judging it.** UI, API, auth, persistence, migrations, jobs, integrations, config, and feature flags fail in different ways. Build a small risk map up front and let it drive which checks, probes, and conditional lanes matter; see `references/risk-mapping.md`.
 - **Use the checklist as a floor, not a ceiling.** `moes` has explicit gates so the pass is complete and repeatable, but no checklist is exhaustive. Generate bug hypotheses from the actual diff, the changed invariants, and the system boundaries; use the references to structure your thinking, not replace it.
 - **A finding blocks only if it survives challenge.** Before any issue gates the verdict, it must have a concrete, reachable trigger — not a theory or an aesthetic objection. Challenging your own findings keeps the punch list small and trustworthy, so the user doesn't have to re-verify it by hand; see `references/findings-lifecycle.md`.
@@ -90,7 +100,7 @@ Read these before starting. They explain *why* the pipeline is shaped the way it
   phases consume it. The pipeline's core internal artifacts are the `Evidence
   Pack`, `Finding Set`, `Design Quality Notes`, `Verification Ledger`, and
   `Decision Packet`; later phases should enrich them, not start from scratch.
-- **Run a freshness probe on triggered surfaces.** Training data drifts and APIs change. Run a docs/advisory lookup when the diff (a) adds or bumps a dependency, (b) uses a library/framework API not already verified in this repo, or (c) touches auth/crypto/payment/sanitization through a library call. Use a documentation MCP such as **Context7** if available (resolve the library, query the specific topic); otherwise web-search official docs + release notes + advisories. Cite source and date in the finding's evidence; if offline or no tool is available, say so and cap confidence at Medium — never assert "current best practice" from memory. Bound to 2-3 lookups per review on triggered surfaces only; keep queries generic (library + API, no internal paths) and never put secrets or tokens in a query. Most relevant in Phases 1, 4, and 7.
+- **Run a freshness probe on triggered surfaces.** Training data drifts and APIs change. Run a docs/advisory lookup when the diff (a) adds or bumps a dependency, (b) uses a library/framework API not already verified in this repo, or (c) touches auth/crypto/payment/sanitization through a library call. Source hierarchy: primary sources first (official docs, source code, specs, first-party APIs) — never a secondary write-up when the primary is reachable. Use a documentation MCP such as **Context7** if available (resolve the library, query the specific topic); otherwise web-search official docs + release notes + advisories, in parallel/background where the host supports it. Cite source and date in the finding's evidence; if offline or no tool is available, say so and cap confidence at Medium — never assert "current best practice" from memory. Bound to 2-3 lookups per review on triggered surfaces only; keep queries generic (library + API, no internal paths) and never put secrets or tokens in a query. Most relevant in Phases 1, 4, and 7.
 
 ## Setup
 
@@ -113,13 +123,14 @@ Establish exactly what `moes` is hardening and confirm it starts from a known-go
    override through `/moes` (`against <branch>`), use that first (`/forge:build` reaches this skill only when run as its Review phase). Otherwise try
    `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`; fall back
    to `main`, then `master`, then `develop`. Identify the current branch with
-   `git rev-parse --abbrev-ref HEAD`.
+   `git rev-parse --abbrev-ref HEAD`. Confirm the base resolves with
+   `git rev-parse --verify <base>` — if it does not resolve, stop and report the bad ref instead of proceeding.
 2. **Branch safety.** If the current branch *is* the base branch (e.g. on `main`), warn the user — `moes` assumes feature work on a branch. Continue only if they confirm.
-3. **Compute the diff.** `git diff <base>...HEAD` for committed work, plus `git status` / `git diff` for uncommitted work. This combined diff is your source of truth for every later phase. Optional accelerator (stdlib-only, degrades gracefully): `python3 <skill-dir>/scripts/triage.py --base <base>` for size XS-XL, time estimate, and `NO_TEST_CHANGES` / `SECURITY_SURFACE` / `MIGRATION_DATA` / `CONFIG_ROLLOUT` / `LARGE_DIFF_SHARD` flags. If the script cannot run, do the same triage by hand — never block on tooling.
+3. **Compute the diff.** `git diff <base>...HEAD` (three-dot, against the merge-base) for committed work, plus `git status --short` / `git diff` for uncommitted work. Capture the commit list once with `git log <base>..HEAD --oneline` and carry both forward into the `Evidence Pack`. If the three-dot diff is empty *and* the working tree is clean, stop and report `empty diff — nothing to review` instead of spawning later phases. This combined diff is your source of truth for every later phase. Optional accelerator (stdlib-only, degrades gracefully): `python3 <skill-dir>/scripts/triage.py --base <base>` for size XS-XL, time estimate, and `NO_TEST_CHANGES` / `SECURITY_SURFACE` / `MIGRATION_DATA` / `CONFIG_ROLLOUT` / `LARGE_DIFF_SHARD` flags. If the script cannot run, do the same triage by hand — never block on tooling.
 4. **Detect languages & frameworks** from changed file extensions and manifests (`package.json`, `composer.json`, `pyproject.toml`, `*.csproj`, etc.). This decides which best-practices references load in Phase 1. Build the single **stack-context snapshot** defined in `references/evidence-pack.md` (language/framework/ORM/test-runner versions, declared vs resolved) so Phases 1, 4, and 6 share one version profile instead of guessing independently.
 5. **Build a project context capsule.** Follow `references/project-context.md`: capture relevant standing instructions, architecture boundaries, local patterns/prior art, domain invariants, tooling/test norms, docs/release conventions, and unknowns. This capsule drives Phases 1, 4, 6, 7, and 8.
 6. **Build a risk map.** Follow `references/risk-mapping.md` to classify the change and write down the top risks before you start polishing. Capture the change archetypes in play (e.g. UI, API, auth, persistence, schema/migration, async/job, integration, config/feature-flag, perf-sensitive), the project/domain invariants from the context capsule, the side effects, the trust boundaries, and the 2-5 highest-value failure modes to probe later. This risk map drives Phases 4, 6, and 7.
-7. **Pin the spec/intent.** Establish *what this change was supposed to do* so Phase 4 can check the diff against it. Follow `references/spec-conformance.md`: look for issue refs in commit messages (`#123`, `Closes #45` → `gh issue view` if available), then a PRD/spec file under `docs/`/`specs/`/`.scratch/` matching the branch/feature, then the branch name as a weak hint. If none of those turn up, ask the user once for a one-line intent or a path. If they have none either, record "no external spec; internal-consistency check only" and proceed — never block on a missing spec. Carry the pinned intent (and its source) forward.
+7. **Pin the spec/intent.** Establish *what this change was supposed to do* so Phase 4 can check the diff against it. Follow `references/spec-conformance.md`: look for issue refs in commit messages (`#123`, `Closes #45` → `gh issue view` if available), then a user-passed spec path if one was given as an argument, then a PRD/spec file under `docs/`/`specs/`/`.scratch/` matching the branch/feature, then the branch name as a weak hint. If none of those turn up, ask the user once for a one-line intent or a path. If they have none either, record "no external spec; internal-consistency check only" and proceed — never block on a missing spec. Carry the pinned intent (and its source) forward.
 8. **Confirm a green baseline.** Run the test suite once now. If it is already failing *before* `moes` touches anything, stop and report — `moes` is not the tool to debug a broken baseline, and you must not mask pre-existing failures as if `moes` caused or fixed them.
 9. **Assign a risk lane.** Classify the diff internally as `green`, `yellow`,
    or `red` based on the surfaces, side effects, and trust boundaries in the
@@ -189,7 +200,7 @@ Gate: structural issues are either fixed (with tests still green) or consciously
 
 ### Phase 4 — Audit *(limited-mutation audit; maximal lane registry; fixes applied after consolidation)*
 
-Independently review the now-polished diff. Phase 4 is a **maximal-audit lane registry**: enumerate the full lane set the diff could plausibly need, then mark each lane `run`, `N/A`, or `deferred by environment` before consolidating findings. The default contract is audit-first, with mutation allowed only after consolidation and only for safe localized fixes that satisfy the auto-fix contract below. Run the lane work as one parallel wave where possible (dispatch parallel subagents — see the `dispatching-parallel-agents` skill and the wave pattern in `../forge/references/delegation.md`) and consolidate their findings into one punch list before any fix is applied. Build one shared context packet once (diff plus Evidence Pack slices: risk map, stack-context snapshot, project context capsule, pinned intent, runtime sketch, hotspots) and hand the same packet to every worker. Every worker returns normalized candidate findings plus a `Covered:` receipt naming what it read; any lane without a receipt is re-run or marked honestly as unexercised.
+Independently review the now-polished diff. Phase 4 is a **maximal-audit lane registry**: enumerate the full lane set the diff could plausibly need, then mark each lane `run`, `N/A`, or `deferred by environment` before consolidating findings. The default contract is audit-first, with mutation allowed only after consolidation and only for safe localized fixes that satisfy the auto-fix contract below. Run the lane work as one parallel wave where possible (dispatch parallel subagents — see the `dispatching-parallel-agents` skill and the wave pattern in `../forge/references/delegation.md`) and consolidate their findings into one punch list before any fix is applied. Build one shared context packet once (diff plus Evidence Pack slices: risk map, stack-context snapshot, project context capsule, pinned intent, runtime sketch, hotspots) and hand the same packet to every worker. Every worker returns normalized candidate findings (under 400 words, citing the violated standard with file + rule or quoting the spec line + hunk) plus a `Covered:` receipt naming what it read; any lane without a receipt is re-run or marked honestly as unexercised.
 
 Fan-out roster (all read-only, fresh-context, depth 1):
 
@@ -506,9 +517,11 @@ Present a concise report:
 - Perf/a11y/rollout/security: <only the relevant lanes and their evidence>
 
 ## Findings
-- Blocking: <none, or list with severity/confidence/origin/action/trigger/report status; `new` first>
+- Blocking — Standards: <none, or list with severity/confidence/origin/action/trigger/report status; `new` first>
+- Blocking — Spec: <none, or missing/partial/wrong vs pinned intent, each with quoted spec line>
 - Surfaced (old code this diff activates): <downgraded one tier, with activation path; never blocks except red-lane + reachable trigger>
 - Non-blocking: <deferred items, coverage gaps, low-confidence notes, planned follow-ups, decision points, with report status>
+- Summary: <Standards: N findings, worst X / Spec: M findings, worst Y — do not pick a single winner across axes>
 
 ## Considered and dismissed
 - <title plus one-line reason for each Finding Set member dropped after challenge or verification, ex-blockers first then by severity and confidence, maximum 5; omit this entire section when empty>

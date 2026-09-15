@@ -197,7 +197,7 @@ After the checklist, you must also:
 - Consider architecture-level issues, edge cases, or domain-specific concerns.
 - Re-check the lane registry: any `N/A` without a why-not, or with a contradicted why-not, is a gate finding.
 - An unconverted, unaccepted environment deferral on yellow/red is a gate finding.
-- **Incorporate the Phase 4 spec-conformance result.** The change must be not just correct but the *right* change: a confirmed missing or partial requirement is a `NEEDS REVISION` regardless of how clean the code is (and `moes` does not implement the gap itself). Unrequested scope creep is at least a flagged item.
+- **Incorporate the Phase 4 spec-conformance result.** The change must be not just correct but the *right* change: a confirmed missing or partial requirement is a `NEEDS REVISION` regardless of how clean the code is (and `moes` does not implement the gap itself). Unrequested scope creep is at least a flagged item. Report Standards and Spec findings separately and name the worst issue within each axis — do not merge or rerank across axes, so one axis cannot mask the other.
 - State the verdict explicitly, with a short justification:
 
 > **READY TO SHIP** — no blocking concerns; safe to merge as-is.
