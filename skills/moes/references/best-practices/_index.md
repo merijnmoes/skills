@@ -23,12 +23,12 @@ Phase 1 of `moes` loads only the best-practices files relevant to what changed. 
 | `.go`, `go.mod` | `go.md` (+ `../async-concurrency-patterns.md` for concurrency shapes) |
 | Python async/concurrency change (`async def`, `await`, `gather`, workers, queues) | `python.md` (+ `../async-concurrency-patterns.md` + `../error-handling-principles.md` for retry/compensation) |
 | Supabase project (`@supabase/supabase-js` in deps, a `supabase/` dir, or `auth.uid()`/`auth.*` in SQL/migrations) | `supabase.md` (+ `postgresql.md` + `sql.md`) |
-| Any UI / markup change (HTML, JSX/TSX, `.vue`, `.svelte`, templates, components, CSS) | `frontend-a11y-i18n.md` |
+| Any UI / markup change (HTML, JSX/TSX, `.vue`, `.svelte`, templates, components, CSS) | `frontend-a11y-i18n.md` (no dedicated `svelte.md` yet — for `.svelte` apply component principles from `vue.md` + `frontend-a11y-i18n.md` plus surrounding-code conventions) |
 
 ## Notes
 
 - **`general-oop.md` and `clean-coding.md` are the backend baseline** for any backend change regardless of language — load both alongside the language-specific file.
-- **`universal-quality.md` is the cross-language smell companion** for Phase 1. Use it for abstraction leaks, flag bloat, stringly typed behavior, redundant writes, and similar issues that are not owned by one language guide.
+- **`../universal-quality.md` is the cross-language smell companion** for Phase 1. Use it for abstraction leaks, flag bloat, stringly typed behavior, redundant writes, and similar issues that are not owned by one language guide.
 - **Framework refs layer on the language refs.** `react.md` does not replace `javascript.md`/`typescript.md`; `fastapi.md` and `django.md` do not replace `python.md`.
 - **A UI change is also a language change.** A `.vue`/`.tsx`/template edit loads both its language file (e.g. `typescript.md`) and `frontend-a11y-i18n.md` — accessibility and i18n are quality dimensions of any user-facing change.
 - **Style diffs can have logic-level quality issues too.** Load `css.md` for maintainability, cascade, responsiveness, and motion discipline; keep `frontend-a11y-i18n.md` for accessibility and localization concerns.

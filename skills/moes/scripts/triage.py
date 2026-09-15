@@ -17,29 +17,42 @@ import sys
 
 SECURITY_HINTS = re.compile(
     r"auth|login|session|token|cookie|oauth|password|crypto|secret|"
-    r"permission|rbac|acl|sso|mfa|jwt",
+    r"permission|rbac|acl|sso|mfa|jwt|"
+    r"xss|sqli|sql-injection|csrf|xsrf|idor|upload|webhook|apikey|api-key|"
+    r"private-key|\.pem$|\.key$",
     re.I,
 )
 MIGRATION_HINTS = re.compile(
-    r"migrat|schema\.sql|alembic|prisma|typeorm|backfill|\.sql$",
+    r"migrat|schema\.sql|alembic|prisma|typeorm|backfill|\.sql$|"
+    r"drizzle|knex|flyway|liquibase",
     re.I,
 )
 CONFIG_HINTS = re.compile(
     r"\.env|Dockerfile|docker-compose|helm/|terraform|\.tf$|"
-    r"k8s/|manifests/|feature.?flag|config\.ya?ml",
+    r"k8s/|manifests/|feature.?flag|config\.ya?ml|"
+    r"\.github/workflows|action\.ya?ml",
     re.I,
 )
-TEST_HINTS = re.compile(r"(test|spec)[-_.]|__tests__|\.test\.|_test\.", re.I)
+TEST_HINTS = re.compile(
+    r"(test|spec)[-_.]|__tests__|__snapshots__|\.test\.|_test\.|\.spec\.|"
+    r"(^|/)tests?/|(^|/)spec/|(^|/)e2e/",
+    re.I,
+)
 
 
 def run(cmd):
+    """Run a git command, returning (stdout, ok).
+
+    Fail-stop: callers must distinguish "git failed" (ok=False) from
+    "git succeeded with empty output" (ok=True, stdout="").
+    """
     try:
         out = subprocess.run(
             cmd, capture_output=True, text=True, timeout=30, check=False
         )
-        return out.stdout if out.returncode == 0 else ""
+        return out.stdout, out.returncode == 0
     except Exception:
-        return ""
+        return "", False
 
 
 def parse_numstat(text):
@@ -101,17 +114,39 @@ def main():
         if not names:
             names = [l.split("\t")[-1] for l in numstat.splitlines() if "\t" in l]
     else:
-        numstat = run(["git", "diff", f"{args.base}...{args.head}", "--numstat"])
+        git_ok = True
+        numstat, ok = run(["git", "diff", f"{args.base}...{args.head}", "--numstat"])
+        git_ok = git_ok and ok
         if not numstat:
-            numstat = run(["git", "diff", "--numstat"])
-        names_txt = run(["git", "diff", f"{args.base}...{args.head}", "--name-only"])
+            # Fall back to uncommitted work; a failed base diff is not
+            # itself fatal as long as the fallback succeeds.
+            fallback, ok = run(["git", "diff", "--numstat"])
+            if ok:
+                numstat = fallback
+            else:
+                git_ok = False
+        names_txt, ok = run(
+            ["git", "diff", f"{args.base}...{args.head}", "--name-only"]
+        )
+        git_ok = git_ok and ok
         if not names_txt:
-            names_txt = run(["git", "diff", "--name-only"])
+            fallback, ok = run(["git", "diff", "--name-only"])
+            if ok:
+                names_txt = fallback
+            else:
+                git_ok = False
         names = [l.strip() for l in names_txt.splitlines() if l.strip()]
 
     files, added, deleted = parse_numstat(numstat)
     if not files:
         files = names
+    if not files and not args.numstat_file and not git_ok:
+        print(
+            "triage: git diff failed (bad base ref or no git repo) — "
+            "cannot distinguish empty diff from broken baseline; stopping.",
+            file=sys.stderr,
+        )
+        return 2
     total = added + deleted
     size = size_bucket(total)
 
@@ -126,9 +161,15 @@ def main():
         flags.append("MIGRATION_DATA")
     if any(CONFIG_HINTS.search(f) for f in files):
         flags.append("CONFIG_ROLLOUT")
+    # Large-diff rule mirrors SKILL.md Phase 4: shard at >500 source lines
+    # (added+deleted from numstat) or >3200 total diff lines. Numstat only
+    # covers source lines; the 3200-total-lines check stays a manual Phase-4
+    # step on the full diff.
     if total > 500:
         flags.append("LARGE_DIFF_SHARD")
     if not files:
+        # Genuinely empty (git succeeded): Phase-0 gate says stop with
+        # "empty diff — nothing to review". Keep the machine flag too.
         flags.append("UNKNOWN_EMPTY_DIFF")
 
     print(f"size: {size} ({added}+{deleted} across {len(files)} files)")

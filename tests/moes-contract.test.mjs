@@ -155,3 +155,41 @@ test('moes lane sharpness holds', async () => {
   assertIncludesIgnoringCase(lifecycle, 'race-mechanism triple');
   assertIncludesIgnoringCase(gate, 'race-mechanism blockers');
 });
+
+test('moes phase 6 execution discipline holds', async () => {
+  const verify = await read('skills/moes/references/verify.md');
+  const ledger = await read('skills/moes/references/verification-ledger.md');
+  const skill = await read('skills/moes/SKILL.md');
+  const gate = await read('skills/moes/references/validation-gate.md');
+  const browser = await read('skills/moes/references/browser-qa.md');
+  const playwright = await read('skills/moes/references/testing-playwright.md');
+
+  for (const phrase of [
+    'Self-first',
+    'Discovery is not proof',
+    'Timeout with progress',
+    'Capability + reachability first',
+  ]) {
+    assertIncludesIgnoringCase(verify, phrase);
+  }
+
+  for (const phrase of ['discovery-only', '~2x timeout', 'actual pass/fail result']) {
+    assertIncludesIgnoringCase(ledger, phrase);
+  }
+
+  for (const phrase of [
+    'Run checks yourself',
+    'capability inventory',
+    'Discovery runs',
+  ]) {
+    assertIncludesIgnoringCase(skill, phrase);
+  }
+
+  for (const phrase of ['were listed', 'user can run']) {
+    assertIncludesIgnoringCase(gate, phrase);
+  }
+
+  assertIncludesIgnoringCase(browser, 'run it yourself');
+  assertIncludesIgnoringCase(playwright, '--list');
+  assertIncludesIgnoringCase(playwright, 'discovery only');
+});

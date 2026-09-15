@@ -17,7 +17,8 @@ walk; do not re-walk another lane's territory:
 - **C2 removed-behavior**: walk every deleted or replaced line. Name the
   invariant it enforced and hunt for where the new code re-establishes it —
   including removed exports, whose replacement often lives in another file
-  and quietly changed a default.
+  and quietly changed a default, and legacy total/headline definitions, whose
+  silent redefinition is a spec-conformance issue.
 - **C3 cross-file tracer**: walk every changed symbol's callers (consumer direction) and every added field's read sites (producer direction), plus same-PR callee changes.
 - **C4 language-pitfall**: pattern-match every hunk against the classic-footgun
   checklist for the diff's language (`==` coercion, falsy-value traps,

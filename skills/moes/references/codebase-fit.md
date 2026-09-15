@@ -44,6 +44,19 @@ Assess and flag as findings:
 - Would a maintainer be surprised by where things live or how they're wired?
 - Does it respect the architecture boundaries, domain invariants, test style, and docs/release conventions captured in the Phase-0 project context capsule?
 
+## Feedback guarantee (no silent dropping)
+
+Q1/Q3 lanes always leave a traceable fit verdict. A fit observation with
+location, mechanism, and concrete maintenance cost enters the shared `Finding
+Set` as `non-blocking` or `deferred` (`Plan`/`Decide`) even without a runtime
+repro — the trigger test in `findings-lifecycle.md` gates `blocking` status
+only. Only taste-only claims without a statable cost drop at the source, and
+those drops surface by name in the dismissed ledger (max 5). Consolidation,
+validation gate, and final report carry every surviving fit finding forward;
+the lane receipt states the fit verdict explicitly (`no fit issues`, or N
+findings with ids) so an empty report means "checked, clean", never "not
+checked".
+
 ## Quick checklist
 - [ ] Searched for prior art / existing utilities before adding new code
 - [ ] Search covered whole repo, adjacent module/tests, and at least three keyword variants

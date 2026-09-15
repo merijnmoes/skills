@@ -111,6 +111,17 @@ normally in Phase 4 or Phase 6. This should explain future `deferred by
 environment` lane states in one line each, rather than surprising the reader
 later.
 
+## Verifier inventory (capability inventory)
+
+Record what Phase 6 must run itself versus honestly mark `not-run`, so later
+phases stop guessing. Per suite (unit, E2E/browser, API): configured (`yes` /
+`no`, with evidence such as `playwright.config.*` + package script + specs),
+browser target when applicable (baseURL / webServer / staging URL), and
+reachable (`yes` / `no` / `unknown`, with the probe used). Example: Playwright
+configured via `playwright.config.ts` + `test:e2e` script + `e2e/*.spec.ts`,
+target `http://localhost:3000`, reachable after `dev` start — Phase 6 runs it
+itself and records the real pass/fail result.
+
 ## Architecture-doc implications
 
 If the diff changes a public API, architecture boundary, or another surface

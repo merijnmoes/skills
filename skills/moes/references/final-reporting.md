@@ -62,7 +62,10 @@ contract.
 - **Evidence** — treat this as the heart of the report. For every relevant
   lane, say what evidence exists: static gates, tests, behavioral verification,
   project fit, docs/config, and only the relevant perf/a11y/rollout/security
-  checks. Name which audit lanes actually completed, which results arrived late
+  checks. For project fit always state the Q1/Q3 verdict explicitly — which
+  prior-art search ran, how many fit findings survived with their ids and
+  report status, or `no fit issues` when clean — so silence never reads as
+  "not checked". Name which audit lanes actually completed, which results arrived late
   (and how they were reconsolidated and re-verified), which findings were
   fixed, and which tests were rerun after the last change. If something could not be run, say that plainly. Do not let absence
   of evidence read like positive evidence.

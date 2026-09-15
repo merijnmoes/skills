@@ -63,6 +63,10 @@ Look for the places where bugs usually hide:
   from a different source than the lines; normalization or fallback hiding a
   data problem; rounded values that no longer sum to the total; a percentage
   shown for a rounded-to-zero value; a visible category permanently at zero;
+  per-record clamping/capping/sign-normalization before aggregation (floor,
+  ceiling, max/min) that moves buckets, subtotals, and headline apart — probe
+  with positive, negative, and compensating contributions across multiple
+  records, never single-record cases alone;
   a mock that bypasses the real aggregation or renderer so the production path
   never runs.
 - **Integration seams** — third-party APIs, queues, jobs, DB transactions,

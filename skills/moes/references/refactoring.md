@@ -127,6 +127,15 @@ downgrade-rather-than-delete in `findings-lifecycle.md`). A single isolated
 signal keeps its normal per-signal handling; the cluster rule only fires on
 accumulation.
 
+**Single hard violation — one is enough to block.** On yellow/red diffs, a
+single surviving hard violation also blocks (NEEDS REVISION) without waiting
+for a cluster: canonical-helper duplicated, second competing pattern for
+something the repo already solves one way, boundary leak across a maintained
+seam/layer, or feature logic leaking into a general-purpose module. Each must
+carry location, mechanism, concrete maintenance cost (who pays, on the next
+likely variant), and a cheaper placement sketch — taste-only claims never
+block. Green-lane singles stay non-blocking `Plan`.
+
 **Scope restraint — read this so the lane doesn't overreach.** This is the *restrained* version of an aggressive structural review, deliberately scoped to fit `moes`:
 - It is **diff-scoped**. Judge the structure the change touched or added. Do **not** flag (or rewrite) untouched code that merely happens to be near the diff — that is scope creep and a common way to introduce regressions.
 - **Behavior preservation and minimality still govern.** The point is to catch *degradation the change caused*, not to mandate ambitious rewrites or treat "I can imagine a cleaner architecture" as a blocker. "Design over working code" is explicitly **not** the `moes` posture.

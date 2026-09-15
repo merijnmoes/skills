@@ -3,7 +3,9 @@
 Phase 4 and Phase 6 support for `moes`, conditional. Apply this
 `browser-qa.md` lane when the diff changes important runnable web UI,
 multi-step browser flows, responsive layout behavior, or pre-release staging
-behavior.
+behavior. Reachable target means the baseURL responds or the configured
+webServer starts; listing specs with `--list` proves nothing — see the
+Execution discipline in `verify.md`.
 
 ## Phases
 
@@ -53,3 +55,6 @@ Record:
 - what could not be exercised in the environment.
 - when there is no runnable target, mark browser and automated accessibility
   checks honestly as environment-blocked — never as passed by inspection.
+- when the suite is configured and the target is reachable, run it yourself and
+  record the real pass/fail result in the verification ledger; a reachable
+  target left unexercised is a gap, not a pass.

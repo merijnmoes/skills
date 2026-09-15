@@ -24,6 +24,13 @@ ideation or verdict debate.
 - Record what was directly observed, what is only indirectly supported by
   evidence, and what the environment prevented you from running.
 
+## Execution discipline
+
+- **Self-first.** Run every check yourself via the shell, harness, or app — never ask the user to run a command you can run. Escalate to the user only when blocked by credentials, interactive login, a physical device, or an explicit prohibition; then log the activity as `not-run`/`environment-blocked` with a `Decide` follow-up instead of a pass.
+- **Capability + reachability first.** Before claiming E2E/browser proof, confirm the capability is configured (config file, test scripts, and specs exist per the Phase-0 inventory — e.g. `playwright.config.*` + `package.json` script + specs) and the target is reachable (baseURL responds, or the configured webServer starts). When the diff touches the E2E-covered journey **and** the suite is configured **and** the target is reachable, run the suite yourself — full suite by default, a focused subset only with an explicit why-not. A reachable target that was not exercised is a gap, never a pass.
+- **Discovery is not proof.** Listing or enumerating tests (`--list`, `--collect-only`, `--dry-run`, `-l`, and equivalents) counts as discovery only. Log such runs as `not-run` with a `discovery-only` note — never as `pass`. Exception: static gates that by design do not execute tests (e.g. `tsc --noEmit`, linters, formatters) remain valid proof for their own lane.
+- **Timeout with progress gets one larger retry.** When a shell timeout aborts a run that was visibly making progress (tests starting or passing, output growing), retry once on the same code state with a ~2x timeout and log it as `infra` with `attempt: 2`, the `prior` id, the raised timeout, and a quote of the progress. Without progress evidence, follow the normal `infra` path. When the larger-timeout retry still times out, propose sharding or splitting the run and carry the remainder as an `infra` gap — do not keep looping.
+
 ## Four-level assessment for new functionality
 
 Judge new behavior on four levels separately, each with its own probe or an
@@ -41,7 +48,7 @@ explicit gap — a green level never proves the next one:
 ## Procedure
 
 1. **Static gates** — run the project's formatter, linter and type-checker (detected in Phase 0). These are cheap and catch more than a human read.
-2. **Test suite** — run the full suite; it must pass. Confirm new code paths are actually *covered* (an untested new path is a finding). Assess test *quality* against `testing.md` — behavior over implementation, deterministic, not over-mocked, not vacuous (asserts something real). A green-but-meaningless test is false confidence and is itself a finding. If the changed surface needs framework-specific testing guidance, load `testing-specialty-router.md`. For higher-risk diffs, use `bug-hunting.md` to choose a few focused probes or regression tests rather than trusting suite breadth alone.
+2. **Test suite** — run the full suite yourself; it must pass. Discovery runs (`--list`, `--collect-only`, `--dry-run`) do not count — see Execution discipline above. Confirm new code paths are actually *covered* (an untested new path is a finding). Assess test *quality* against `testing.md` — behavior over implementation, deterministic, not over-mocked, not vacuous (asserts something real). A green-but-meaningless test is false confidence and is itself a finding. If the changed surface needs framework-specific testing guidance, load `testing-specialty-router.md`. For higher-risk diffs, use `bug-hunting.md` to choose a few focused probes or regression tests rather than trusting suite breadth alone.
 3. **Run the app / feature** — launch it and exercise the change for real:
    - the **golden path** the change was built for (use the intent pinned in Phase 0);
    - **at least one negative/error path** — invalid input, empty state, permission-denied path, timeout, or dependency failure, whichever best matches the risk map;
@@ -56,7 +63,7 @@ explicit gap — a green level never proves the next one:
    - **async / duplicate / replay behavior** *(when relevant)* — rerun the same message, job, or action and confirm side effects are not duplicated or corrupted.
    - **config / feature-flag behavior** *(when relevant)* — verify safe defaults, missing-config behavior, and both sides of the flag when the change depends on rollout controls.
    - **project/domain invariants** *(when relevant)* — exercise the repo-specific calculation, workflow state, tenant/privacy boundary, compatibility promise, or documented convention captured in the project context capsule.
-   - **Browser QA for important runnable web UI** *(when relevant)* — for important runnable web UI changes, prefer `browser-qa.md` as the Phase 6 proof path instead of an ad hoc manual click-through. Cover the golden path, one meaningful negative path, and one viewport- or state-specific regression check. When the project already has specialty browser/E2E tooling and the changed surface needs that detail, route through `testing-specialty-router.md`.
+    - **Browser QA for important runnable web UI** *(when relevant)* — for important runnable web UI changes, prefer `browser-qa.md` as the Phase 6 proof path instead of an ad hoc manual click-through. First confirm capability + reachability per Execution discipline above; when the suite is configured and the target is reachable, run it yourself and record the real pass/fail result. Cover the golden path, one meaningful negative path, and one viewport- or state-specific regression check. When the project already has specialty browser/E2E tooling and the changed surface needs that detail, route through `testing-specialty-router.md`.
    - **post-deploy / canary observation** *(when relevant and a target environment exists)* — if the risk map includes rollout-sensitive deployed behavior, use `post-deploy-monitoring.md` to record at least one canary-style observation instead of relying only on local checks.
    - **workflow safety confirmation** *(when relevant and static verification is meaningful)* — for workflow/release automation changes, confirm the trusted event model, token/secrets exposure, and execution path assumptions from `workflow-security.md`, and record what was statically proven versus what could not be exercised directly.
 4. **Accessibility** *(UI changes only)* — run the dedicated `accessibility-review.md` lane for the changed UI. Treat it as the Phase 6 verification path that proves the expectations introduced by `best-practices/frontend-a11y-i18n.md` actually hold: keyboard-only pass, automated checker (e.g. axe), and any changed focus/label/error/motion expectations that matter for this surface. This complements `browser-qa.md`; do not treat browser smoke/interaction evidence as a substitute for the dedicated accessibility lane.
@@ -180,7 +187,9 @@ Stop, do not loop, when any holds:
 - same trigger reproduces identically twice — deterministic defect needing
   design, not polish, stop after 2nd
 - `infra` blocks twice with no code fix possible — stop, mark
-  `not-run`/`environment-blocked`, carry gap to gate
+  `not-run`/`environment-blocked`, carry gap to gate (a shell timeout with
+  visible progress gets its one larger-timeout retry first per Execution
+  discipline above; that retry counts as the second attempt)
 - fix would exceed localized `Fix` scope — stop, mark
   `Investigate`/`Plan`/`Decide`
 

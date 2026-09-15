@@ -48,6 +48,15 @@ Loaded in `moes` Phase 1 when the diff touches UI/markup (HTML/JSX/TSX/Vue/Svelt
   framework supports.
 - New or changed PO strings follow the repository workflow — typically marked
   `fuzzy` until reviewed — so unreviewed translations never ship as final.
+- Check catalog hygiene for every changed locale: no missing entries for keys
+  the changed code actually renders, no stale/orphaned entries left behind by
+  renamed or removed keys, and source references (`#:`) that still point at
+  real call sites. A silently falling back missing entry, or an orphaned entry
+  masking a renamed key, is a correctness finding, not cleanup.
+- Check runtime-key agreement: every key the changed code looks up at runtime
+  resolves in the changed catalogs, and every new/renamed key appears where the
+  loader expects it. Report unresolved or mismatched keys with lookup site plus
+  catalog file.
 - Compile and validate every changed MO file (e.g. `msgfmt --check`) and confirm
   the built catalog actually loads; a PO edit without a valid compiled MO is
   not done.

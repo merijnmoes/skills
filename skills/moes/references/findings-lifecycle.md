@@ -103,8 +103,10 @@ A race condition needs the interleaving. A structural regression needs the
 concrete maintenance hazard it creates, not an aesthetic objection.
 
 The failure scenario is the trigger plus the wrong outcome (or concrete cost for quality findings); it is what satisfies this trigger test. Lanes drop scenario-less candidates at the source; verifiers downgrade uncertain survivors but never reject one as "too speculative".
+Quality and codebase-fit findings do not need a runtime repro to survive as `non-blocking` or `deferred`: location plus mechanism plus concrete maintenance cost (duplication, second pattern, boundary leak, surprising placement, future change cost) suffices, with action `Plan` or `Decide` and status carried forward. A runtime trigger is required only to mark them `blocking`.
 Architecture findings may block through the mechanism gate instead of a reachable trigger: the triple of harmed parties named, blast radius counted, and cheaper alternative stated replaces the trigger requirement, while `failureScenario` is still carried as the concrete cost.
 Concurrency hazards use the same gate with the race-mechanism triple defined in `bug-hunting.md`.
+Structural-regression and codebase-fit hard violations (canonical-helper duplicated, second competing pattern, boundary leak, feature logic in a general module) use the same gate on yellow/red diffs: location plus mechanism plus concrete maintenance cost plus cheaper placement sketch replaces the runtime-trigger requirement for `blocking` status. Taste-only claims without a statable cost never pass this gate.
 
 ## Corroborated findings
 

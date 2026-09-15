@@ -24,6 +24,15 @@ covered elsewhere.
 - Flake diagnosis: use `repeat-each`, retries, traces, or focused reruns to
   investigate nondeterminism, not to hide it.
 
+## Verification discipline
+
+- `--list` is discovery only: it proves the runner found specs, not that they
+  pass. Never log it as verification evidence — run the suite and record the
+  observed pass/fail result per `verify.md`.
+- When the target is reachable, run the suite yourself instead of asking the
+  user; when a shell timeout aborts a progressing run, retry once with a larger
+  timeout before sharding or marking `infra`.
+
 ## Keep the scope tight
 
 Stay on the changed browser journey, the stability risks it introduces, and the

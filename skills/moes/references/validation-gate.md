@@ -46,6 +46,8 @@ right verdict?"** It should judge the results of `risk-mapping.md`,
   remain open risks until disproven.
 - **"The tools were green, so the problem is probably not there."** Tool output
   is evidence, not absolution.
+- **"The tests were listed, so coverage must exist."** Discovery runs (`--list`, `--collect-only`, `--dry-run`) prove the runner found tests, not that they passed. Only a real execution with an observed pass/fail result counts.
+- **"The user can run the suite."** Delegating a runnable check to the user is not verification. The ledger must show the agent ran it, or an explicit environment-blocked gap with a `Decide` follow-up.
 - **"This is probably fine."** Verdicts need concrete justification from
   evidence, not a confident tone.
 
@@ -64,11 +66,15 @@ Do not choose the verdict by vibe. Calibrate it explicitly:
   before merge: a confirmed non-catastrophic correctness bug, missing required
   coverage on a high-risk new path, a spec gap, a risky but bounded config/doc
   mismatch, a serious App Store reviewability issue, an unresolved red-lane
-  threat-model finding that is important but not fully blocking, or a residual
+  threat-model finding that is important but not fully blocking, a surviving
+  structural-regression or codebase-fit hard violation on a yellow/red diff
+  (single canonical-duplication, second pattern, boundary leak, or feature-in-general-module
+  with mechanism plus maintenance cost plus placement sketch, or a patched-in cluster),
+  or a residual
   risk too important to leave implicit.
 - **READY TO SHIP** — relevant gates are green, all registered `run` audit lanes actually completed (no pending or late-missing lane), new integration and renderer paths are tested (not just reasoned about), the top risks from the risk map
   were meaningfully exercised, no confirmed blocking findings remain, and any
-  residual risks are explicitly small, bounded, and acceptable. A corroborated HIGH (a second independent audit also rates it HIGH) can never be closed as residual risk without a concrete trigger, a reproducible example, an explicit Fix/Investigate/Plan/Decide decision, and fresh verification after any fix.
+  residual risks are explicitly small, bounded, and acceptable. The ledger must show the required suites were really executed on the final code state with an observed pass/fail result — discovery-only, delegated-to-user, or `flaky`/`infra` entries never satisfy this. When the diff touched an E2E/browser-covered journey and that suite was configured with a reachable target, its real result must be in the ledger; otherwise the verdict is at most NEEDS REVISION with the gap named. A corroborated HIGH (a second independent audit also rates it HIGH) can never be closed as residual risk without a concrete trigger, a reproducible example, an explicit Fix/Investigate/Plan/Decide decision, and fresh verification after any fix.
 
 When in doubt, name the exact reason the issue changes the verdict. "Feels
 unfinished" is not enough.
@@ -157,7 +163,7 @@ Beyond generic correctness, sweep the diff for the failure classes that do the m
 - **Project/domain rules** — repo-specific product invariants, workflow states, tenant/privacy boundaries, compatibility promises, and team policy captured in the project context capsule remain true. If the rule is undocumented but appears material, report the unknown instead of inventing a rule.
 - **Data integrity** — silent truncation, encoding/charset corruption, precision/rounding loss, timezone/locale mishandling, partial writes that leave records half-updated, and schema/migration safety (is the migration reversible; does it lock or rewrite a large table; does old code still run against the new schema during rollout). Corrupted or lost data is often unrecoverable — weight it accordingly.
 - **Idempotency & concurrency** — race conditions and TOCTOU on shared state, operations that aren't safe to retry (double-charge, duplicate row, replayed webhook), missing locks/transactions across a read-modify-write, and double-submit / at-least-once delivery assumptions. Ask: what happens if this runs twice, or two of these run at once?
-- **Financial / quantitative correctness** *(only where the change touches money, billing, quotas, or other quantitative invariants)* — currency and unit consistency, rounding direction and accumulation error, off-by-one on quotas/limits, and sign/overflow on balances. A wrong number that looks plausible is worse than a crash. For any new breakdown/total UI (totals with line items, percentages, quotas): require (a) a pure-calculation test, (b) a non-zero aggregation test, (c) a renderer/formatter test, (d) a zero/fallback test, and (e) a consistency test proving total, rounded lines, and percentages agree. Actively hunt: total from a different source than the lines; normalization or fallback masking a data problem; rounded values that no longer sum; a percentage shown for a rounded-to-zero value; a visible category permanently stuck at zero; a mock that bypasses the real integration code entirely. Prefer one canonical source for total and breakdown; treat defensive normalization as suspect until the underlying invariant is proven, not as an automatic improvement.
+- **Financial / quantitative correctness** *(only where the change touches money, billing, quotas, or other quantitative invariants)* — currency and unit consistency, rounding direction and accumulation error, off-by-one on quotas/limits, and sign/overflow on balances. A wrong number that looks plausible is worse than a crash. Trace the full unit chain source → calculation → aggregation → rounding → formatting → caption/helptext, and compare sibling indicators sharing labels or helptext for scale mismatches (per-day vs per-week, per-person vs total, absolute vs percentage). A unit/scale mismatch is a correctness/spec finding, not a cosmetic note. For any new breakdown/total UI (totals with line items, percentages, quotas): require (a) a pure-calculation test, (b) a non-zero aggregation test, (c) a renderer/formatter test, (d) a zero/fallback test, and (e) a consistency test proving total, rounded lines, and percentages agree. Actively hunt: total from a different source than the lines; normalization or fallback masking a data problem; rounded values that no longer sum; a percentage shown for a rounded-to-zero value; a visible category permanently stuck at zero; a mock that bypasses the real integration code entirely. Prefer one canonical source for total and breakdown; treat defensive normalization as suspect until the underlying invariant is proven, not as an automatic improvement.
 - **Configuration / rollout safety** — defaults are safe, missing config fails safely, feature flags have explicit fallback behavior, and deployment sequencing does not silently weaken security or correctness.
 - **Container / deployment assumptions** — when Docker, Compose, health checks,
   or rollout mechanics changed, the gate distinguishes reviewed overlap and
