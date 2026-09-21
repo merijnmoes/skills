@@ -8,12 +8,12 @@ risk is, and what evidence exists before deeper review begins.
 
 - diff scope
 - base branch and comparison point
-- commit list (`git log <base>..HEAD --oneline`)
+- commit list (`git log <base>..HEAD --oneline`) plus commit-body summary (full messages via `git log <base>..HEAD --format=fuller --no-merges`, PR description when available)
 - changed surfaces and subsystem clusters
 - language and framework detection
 - stack-context snapshot (single version profile shared by all later lanes — see below)
 - project-context capsule
-- pinned intent/spec source
+- pinned intent/spec source plus intent-evolution ledger (original plan vs later commit amendments; each entry: amending commit, superseded plan line, stated reason)
 - risk lane: `green` | `yellow` | `red`
 - risk map
 - runtime interaction sketch
@@ -134,6 +134,10 @@ explicit for Phase 4 and Phase 5 routing.
 If the diff touches iOS purchase flows, privacy disclosures, metadata,
 reviewer-facing setup, or other submission-sensitive surfaces, capture that
 here so the App Store lane can be registered later. Otherwise write `none`.
+
+## Intent-evolution ledger
+
+Compact table built in Phase 0 from the commit bodies and carried into Phase 4 spec conformance. Columns: amending commit (hash + subject) | plan line or file it supersedes | stated reason (quote the body) | status (`amended intent` / `unexplained — needs Decide`). Plan-agent docs that no later commit touches stay as original intent; small fix commits with explicit rationale become amended intent; terse or empty messages stay `unexplained`, never silent justification. Keep to the entries that change what Phase 4 should enforce — omit pure refactor/reword noise.
 
 ## Output discipline
 
