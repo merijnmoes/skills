@@ -78,6 +78,8 @@ Also flag specialty surfaces when present, even if they overlap the archetypes
 above. Typical flags include:
 
 - user-facing UI / markup accessibility surface
+- Tailwind / utility-class surface (`tailwind.config.*`, v4 `@theme` CSS, utility class lists, `cva`/`tailwind-variants` configs)
+- design-system surface (shared components, tokens, or system contracts in play)
 - iOS metadata / purchase / privacy / reviewer-facing submission surface
 - Docker / Kubernetes / Terraform / cloud configuration surface
 - `.github/workflows` / release automation / CI automation surface
