@@ -77,11 +77,24 @@ contract.
   registry, specialty-lane auto-fix notes, and threat-model escalation status
   concise but explicit. This is where readers should learn which lanes ran,
   which were `N/A`, and which were `deferred by environment`.
-- **Findings** — split blocking from non-blocking items. For every finding,
-  include severity, confidence, action type, concrete trigger or violated spec
-  line, and current status. Order findings by business impact, not by phase or
-  file order. Keep blocking Standards and blocking Spec findings in separate
-  sub-lists and close with a one-line per-axis summary (`Standards: N, worst X / Spec: M, worst Y`); do not pick a single winner across axes.
+- **Findings** — show blockers separately from the non-blocking sections. For
+  every finding, include severity, confidence, action type, concrete trigger,
+  maintenance cost, or violated spec line as applicable, and current status.
+  Order by business impact, not by phase or file order. Keep blocking Standards
+  and blocking Spec findings in separate sub-lists and close with a one-line
+  per-axis summary (`Standards: N, worst X / Spec: M, worst Y`); do not pick a
+  single winner across axes.
+- **Concerns** — surface surviving non-blocking risks, uncertainty, coverage
+  gaps, and surfaced issues. State the affected surface, evidence and confidence,
+  impact, and next action; distinguish a plausible concern needing investigation
+  from a confirmed issue. Do not silently drop it just because it cannot block.
+- **Suggested improvements** — surface worthwhile diff-scoped improvements and
+  design follow-ups from surviving findings or report-facing `Design Quality
+  Notes`. Explain the specific benefit or maintenance cost, trade-off, and next
+  action. A quality improvement need not have a runtime failure, but must be
+  grounded in the changed code; omit taste-only advice and speculative filler.
+  Use "None identified" when either section has nothing worth reporting. Do not
+  duplicate items across sections or change verdict thresholds.
 - **Considered and dismissed** — list Finding Set members dropped after challenge or verification: title plus one-line reason each, ex-blockers first then by severity and confidence, maximum 5. Omit when empty.
 - **What went right** — include this only for meaningful examples from `Design
   Quality Notes`. Tie each note to a changed surface and explain the mechanism:
@@ -150,7 +163,11 @@ it, but the report should make that description easy to derive.
 - [ ] Evidence is listed per relevant lane, not implied.
 - [ ] Report names completed vs pending/late lanes, fixed findings, and tests rerun after the last change.
 - [ ] Reasoned-about-only risks are listed separately from directly verified ones.
-- [ ] Findings carry severity/confidence/action/trigger/status.
+- [ ] Findings carry severity, confidence, action, trigger or concrete cost,
+      and status.
+- [ ] Non-blocking concerns and worthwhile improvements are visible in their
+      own sections, or explicitly marked "None identified"; neither is promoted
+      to a blocker just to ensure it is reported.
 - [ ] Learning notes explain the mechanism, why, trade-off, when-not-to-apply,
       and alternative for instructive advice.
 - [ ] Optional "What went right" section appears only for meaningful examples

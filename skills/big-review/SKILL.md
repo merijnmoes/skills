@@ -98,6 +98,7 @@ Read these before starting. They explain *why* the pipeline is shaped the way it
 - **Use the checklist as a floor, not a ceiling.** `big-review` has explicit gates so the pass is complete and repeatable, but no checklist is exhaustive. Generate bug hypotheses from the actual diff, the changed invariants, and the system boundaries; use the references to structure your thinking, not replace it.
 - **A finding blocks only if it survives challenge.** Before any issue gates the verdict, it must have a concrete, reachable trigger — not a theory or an aesthetic objection. Challenging your own findings keeps the punch list small and trustworthy, so the user doesn't have to re-verify it by hand; see `references/findings-lifecycle.md`.
 - **Classify findings by next action.** After findings survive verification, label what should happen next: Fix, Investigate, Plan, or Decide. This keeps real blockers actionable without pretending every architectural smell or domain question can be solved inside `big-review`; see `references/findings-lifecycle.md`.
+- **Look beyond blockers.** Actively identify diff-scoped non-blocking concerns and worthwhile improvements as well as defects. Carry evidence-backed observations and applicable design-quality notes through to the final report, without inventing filler or treating them as ship blockers.
 - **Evidence beats narration.** The final report should make it easy for a reviewer to see what changed, what was verified, what remains risky, what project-specific rules were checked, and why the verdict is justified. Prefer concrete evidence — commands run, flows exercised, files updated, triggers reproduced, docs checked — over generic reassurance.
 - **Artifacts beat rediscovery.** Build the shared evidence once, then let later
   phases consume it. The pipeline's core internal artifacts are the `Evidence
@@ -543,9 +544,14 @@ Present a concise report:
 ## Findings
 - Blocking — Standards: <none, or list with severity/confidence/origin/action/trigger/report status; `new` first>
 - Blocking — Spec: <none, or missing/partial/wrong vs amended intent, each with quoted spec line plus any justifying commit considered>
-- Surfaced (old code this diff activates): <downgraded one tier, with activation path; never blocks except red-lane + reachable trigger>
-- Non-blocking: <deferred items, coverage gaps, low-confidence notes, planned follow-ups, decision points, with report status>
+- Blocking surfaced issues (old code this diff activates): <none, or list with activation path; blocks only on red-lane + reachable trigger>
 - Summary: <Standards: N findings, worst X / Spec: M findings, worst Y — do not pick a single winner across axes>
+
+## Concerns
+- <non-blocking risks, uncertainties, coverage gaps, or surfaced issues, with location or affected surface, evidence and confidence, why it matters, action and report status; include severity and origin for findings; or "None identified">
+
+## Suggested improvements
+- <worthwhile non-blocking changes or design follow-ups, with location, evidence and confidence, concrete benefit or maintenance cost, trade-off, action and report status; include severity and origin for findings; or "None identified">
 
 ## Considered and dismissed
 - <title plus one-line reason for each Finding Set member dropped after challenge or verification, ex-blockers first then by severity and confidence, maximum 5; omit this entire section when empty>
