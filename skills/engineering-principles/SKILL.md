@@ -160,3 +160,15 @@ For larger or ambiguous changes:
 When principles conflict, prioritize correctness, user intent and maintainability over superficial simplicity.
 
 **The standard:** Make the smallest change that correctly solves the real problem, is easy to understand, and can be demonstrated to work.
+
+## Applying design heuristics
+
+Use familiar principles as questions that help choose a design, not as rules to satisfy mechanically. The project's conventions, the actual requirements, and the simplest correct solution take precedence.
+
+- **KISS and YAGNI:** Prefer the least complex design that handles today's requirements and evidenced edge cases. Do not add generality, extension points, or configuration solely for hypothetical future needs.
+- **DRY:** Share knowledge that represents the same concept and must evolve together. Similar-looking code may have different reasons to change; keeping it separate can be clearer and safer than forcing it behind a generic helper.
+- **SOLID, selectively:** Keep responsibilities cohesive when they have distinct reasons to change; use clear, small interfaces when callers need different capabilities; preserve substitutability where real subtypes exist; and invert dependencies at meaningful boundaries such as volatile or external systems. Do not add interfaces, wrappers, or layers just to follow a letter of SOLID.
+- **Look for structural simplification:** For a meaningful change, ask whether the same behavior can be expressed with fewer concepts, branches, flags, or indirection. Keep feature logic in the module that owns it; prefer explicit contracts over casts or fallbacks that hide uncertainty; and avoid partial updates when an atomic operation is practical. Treat these as prompts to investigate, not defects by themselves.
+- **Treat complexity signals as evidence to examine:** New special cases in a busy flow, pass-through abstractions, unnecessary serialization, or pushing a file past roughly 1,000 lines may indicate a better structure. None is an automatic violation; identify the concrete cost and a proportionate remedy before changing or flagging it.
+
+The structural-simplification prompts are informed by [Thermos' code-quality review](https://github.com/cursor/plugins/blob/main/thermos/skills/thermo-nuclear-code-quality-review/SKILL.md), adapted here for everyday engineering rather than a strict audit.
