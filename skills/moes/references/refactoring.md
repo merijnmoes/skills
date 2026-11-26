@@ -136,6 +136,28 @@ carry location, mechanism, concrete maintenance cost (who pays, on the next
 likely variant), and a cheaper placement sketch — taste-only claims never
 block. Green-lane singles stay non-blocking `Plan`.
 
+**Deep maintainability pass — challenge the design, not just the diff's
+correctness.** For every meaningful addition, actively look for a structural
+reframing that removes concepts, branches, helpers, or layers while preserving
+behavior. Ask whether the change adds spaghetti to an unrelated flow, moves
+logic out of its canonical module, introduces a shallow wrapper or speculative
+seam, obscures a contract with casts/optionality/fallbacks, or makes independent
+work unnecessarily sequential or related updates less atomic. Prefer deleting
+unneeded complexity over rearranging it, but only propose a remedy that fits
+the feature's own touched modules and has a credible behavior-preserving,
+testable path. Do not turn ambition into speculative rewrites, aesthetic
+blockers, or work on untouched neighbors; apply the normal finding-lifecycle
+and severity gates.
+
+For each changed file that grows substantially, record its before/after line
+count. Treat a change that takes a file from below 1,000 lines to above 1,000
+as a strong decomposition signal, not an automatic violation: explain why the
+new code belongs there or identify a concrete, lower-risk split. Also consider
+whether new ad-hoc conditionals, mode flags, repeated logic, or narrow
+edge-case branches make a busy flow harder to reason about. Keep any resulting
+finding diff-scoped, mechanism-based, and actionable rather than reporting
+cosmetic nits.
+
 **Scope restraint — read this so the lane doesn't overreach.** This is the *restrained* version of an aggressive structural review, deliberately scoped to fit `moes`:
 - It is **diff-scoped**. Judge the structure the change touched or added. Do **not** flag (or rewrite) untouched code that merely happens to be near the diff — that is scope creep and a common way to introduce regressions.
 - **Behavior preservation and minimality still govern.** The point is to catch *degradation the change caused*, not to mandate ambitious rewrites or treat "I can imagine a cleaner architecture" as a blocker. "Design over working code" is explicitly **not** the `moes` posture.

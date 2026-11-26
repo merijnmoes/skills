@@ -215,3 +215,35 @@ test('moes regression guards hold', async () => {
   assertIncludesIgnoringCase(spec, 'never treat existing feature-diff logic as removable');
   assertIncludesIgnoringCase(context, 'generated files are read-only');
 });
+
+test('moes includes deep correctness and maintainability review passes', async () => {
+  const skill = await read('skills/moes/SKILL.md');
+  const codeReview = await read('skills/moes/references/code-review.md');
+  const refactoring = await read('skills/moes/references/refactoring.md');
+
+  for (const phrase of [
+    'C5 compatibility and gates',
+    'Q4 deep maintainability',
+    'fresh-context, read-only pass',
+  ]) {
+    assertIncludesIgnoringCase(skill, phrase);
+  }
+
+  for (const phrase of [
+    'developer workflows',
+    'feature-gated paths remain gated',
+    'intended breakage',
+    'review discussion',
+  ]) {
+    assertIncludesIgnoringCase(codeReview, phrase);
+  }
+
+  for (const phrase of [
+    'Deep maintainability pass',
+    'behavior-preserving',
+    'below 1,000 lines to above 1,000',
+    'unnecessarily sequential',
+  ]) {
+    assertIncludesIgnoringCase(refactoring, phrase);
+  }
+});
