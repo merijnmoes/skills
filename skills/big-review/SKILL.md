@@ -188,6 +188,7 @@ Gate: changed code follows the relevant idioms, or deviations are noted with rea
 Improve clarity and remove unnecessary complexity in the changed code.
 
 - Follow `references/simplify.md`. It carries the equivalence test that keeps this phase safe without a test gate, the clarity ethos, and the local-simplification catalog.
+- Make a focused pass for avoidable artifacts in the changed code: unnecessary or locally inconsistent comments, defensive checks or catches that duplicate guarantees on trusted paths, casts used only to bypass type errors, and deep nesting that can be plainly flattened. Treat these as prompts to inspect the code and project conventions, not automatic violations; keep valid validation and error behavior intact.
 - Goal is readability and removing accidental complexity — flatten needless nesting, name things well, drop dead code — **without** changing behavior or over-compressing into clever one-liners. "Dead code" here means code proven unreachable or unreferenced (no test, caller, hook, or runtime flow depends on it) — never feature-diff logic removed on interpretive grounds; when reachability is uncertain, keep the code and file a finding instead.
 - This is the middle improve rung: language idioms are Phase 1, structural change is Phase 3. Phase 2 is *local* clarity — single-location rewrites whose equivalence you can see. Anything you'd need the tests to prove belongs in Phase 3.
 

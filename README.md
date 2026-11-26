@@ -23,6 +23,12 @@ codebase, choosing simple designs, preserving behavior, and verifying changes.
 It treats heuristics such as KISS, DRY, and SOLID as context-sensitive tools,
 not rigid rules.
 
+## Talk Normal
+
+`talk-normal` restates the previous assistant response in plain, concise
+language while preserving terminology used by the project. Invoke it manually
+when you want a simpler restatement.
+
 ## Install
 
 ```bash
@@ -41,6 +47,7 @@ npx skills add merijnmoes/skills --copy
 Invoke `big-review` as `/big-review` in Claude Code, `$big-review` in Codex,
 or ask Copilot to use the `big-review` skill. The engineering-principles skill
 can be selected from the agent's available skills.
+Invoke `talk-normal` manually when you want the previous response restated.
 
 ## Repository structure
 
@@ -50,7 +57,9 @@ can be selected from the agent's available skills.
     ├── big-review/
     │   ├── SKILL.md
     │   └── references/   # review lanes, verification, and reporting
-    └── engineering-principles/
+    ├── engineering-principles/
+    │   └── SKILL.md
+    └── talk-normal/
         └── SKILL.md
 ```
 

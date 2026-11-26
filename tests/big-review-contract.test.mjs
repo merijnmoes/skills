@@ -35,6 +35,40 @@ test('big-review is a public review skill with its own command surface', async (
   }
 });
 
+test('talk-normal is manually invoked and preserves project terminology', async () => {
+  const skill = await read('skills/talk-normal/SKILL.md');
+
+  assert.match(skill, /^name: talk-normal$/m);
+  assert.match(skill, /^user-invocable: true$/m);
+  assert.match(skill, /^disable-model-invocation: true$/m);
+  assertIncludesIgnoringCase(skill, 'previous response');
+  assertIncludesIgnoringCase(skill, 'project itself uses');
+  assertIncludesIgnoringCase(skill, 'Return only the rewrite');
+});
+
+test('big-review Phase 2 checks cleanup cues without treating them as style rules', async () => {
+  const skill = await read('skills/big-review/SKILL.md');
+  const simplify = await read('skills/big-review/references/simplify.md');
+
+  assertIncludesIgnoringCase(skill, 'references/simplify.md');
+  for (const phrase of [
+    'unnecessary or locally inconsistent comments',
+    'trusted paths',
+    'casts used only to bypass type errors',
+  ]) {
+    assertIncludesIgnoringCase(skill, phrase);
+  }
+
+  for (const phrase of [
+    'Targeted cleanup cues',
+    'inspection prompts, not permission for broad cleanup',
+    'An unusual pattern is not automatically wrong',
+    'proven bug must follow Big Review',
+  ]) {
+    assertIncludesIgnoringCase(simplify, phrase);
+  }
+});
+
 test('big-review shared-file references resolve inside this repo', async () => {
   const skill = await read('skills/big-review/SKILL.md');
   const delegation = await read('skills/big-review/references/delegation.md');

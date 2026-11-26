@@ -22,6 +22,17 @@ Phase 2 has **no test gate** — and that is only safe because every change here
 - **No dense one-liners.** Nested ternaries, chained side effects, and packed comprehensions that need a second read are *less* simple, not more.
 - **Names carry intent.** A precise name removes the need for a comment and for the reader to reconstruct meaning from usage.
 
+## Targeted cleanup cues
+Use these cues to scrutinize the changed code, not as a style checklist. Confirm the behavior and local conventions before editing.
+
+- **Unnecessary comments** — remove comments that merely restate code or are inconsistent with local style. Keep explanations of why, invariants, non-obvious constraints, and public contracts.
+- **Redundant defensive code** — check whether a guard, fallback, or `try`/`catch` duplicates a guarantee already established on a trusted path. Remove it only when that guarantee and unchanged observable error behavior are clear; retain validation and error handling for untrusted inputs.
+- **Type escapes** — question a cast to `any` when it only silences a type error. Prefer a small correction using existing types; do not hide the error or redesign a type boundary in this phase.
+- **Needless nesting** — use the arrow-shaped nesting check above; flatten with an early exit only when the equivalent control flow is obvious.
+- **Local consistency** — compare the changed code with the surrounding file and project conventions. An unusual pattern is not automatically wrong, and personal style preferences are not findings.
+
+These are inspection prompts, not permission for broad cleanup. Preserve behavior in this phase; if the fix needs tests to establish equivalence, route it to Phase 3. A proven bug must follow Big Review's normal finding and fix gates rather than being treated as a style cleanup.
+
 ## Local-simplification catalog
 Each: what it is → the fix. Act only when the result is plainly equivalent and plainly clearer.
 
