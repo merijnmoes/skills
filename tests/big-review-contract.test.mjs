@@ -396,6 +396,29 @@ test('big-review architecture lane builds an advisory map', async () => {
   assertIncludesIgnoringCase(skill, 'architecture-review.md');
 });
 
+test('big-review checks diff-scoped design friction and interface testability', async () => {
+  const architecture = await read('skills/big-review/references/architecture-review.md');
+  const design = await read('skills/big-review/references/design-quality.md');
+  const context = await read('skills/big-review/references/project-context.md');
+  const skill = await read('skills/big-review/SKILL.md');
+
+  for (const phrase of [
+    'rules are scattered',
+    'interaction between them remains untested',
+    'deletion test',
+    'do not broaden the',
+  ]) {
+    assertIncludesIgnoringCase(architecture, phrase);
+  }
+  assert.match(architecture, /finding\s+and mutation gates/i);
+  assertIncludesIgnoringCase(design, "domain concept's rules are scattered");
+  assertIncludesIgnoringCase(design, 'composition between helpers');
+  assertIncludesIgnoringCase(design, 'hypothetical variation');
+  assertIncludesIgnoringCase(context, 'GLOSSARY.md');
+  assertIncludesIgnoringCase(context, 'docs/adr/*');
+  assertIncludesIgnoringCase(skill, 'interface testability and composition');
+});
+
 test('big-review findings require concrete scenarios and structured evidence', async () => {
   const lifecycle = await read('skills/big-review/references/findings-lifecycle.md');
 

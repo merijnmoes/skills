@@ -23,8 +23,9 @@ Keep it short: usually 6-12 bullets. Prefer concrete rules over broad descriptio
 Read only what exists and is relevant to the diff:
 
 1. Root and nearest instruction files: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/*`.
-2. Domain glossary first: `CONTEXT.md` (plus `CONTEXT-MAP.md` when the repo has
-   multiple contexts) and `docs/adr/*` in the touched area. Respect ADRs unless
+2. Domain glossary first: `CONTEXT.md`, `GLOSSARY.md`, or the project's
+   equivalent (plus `CONTEXT-MAP.md` when the repo has multiple contexts) and
+   relevant ADRs such as `docs/adr/*` in the touched area. Respect ADRs unless
    a verified trigger justifies reopening one. Challenge glossary conflicts
    immediately ("glossary defines X as A, but the diff/user means B — which is
    it?"), sharpen fuzzy terms with concrete edge-case scenarios, and

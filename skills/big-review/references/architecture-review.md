@@ -20,6 +20,27 @@ Build one compact inventory of what the diff did to the system's shape:
   deeper or shallower, locality up or down, coupling change, trade-off, when
   not to apply, simpler alternative
 
+For the changed behavior, trace the relevant callers, modules, and tests:
+
+- Does understanding or changing one domain concept require navigating several
+  files because its rules are scattered, or do those files hide distinct
+  responsibilities that should stay separate?
+- Do callers need to coordinate ordering, validation, configuration, or errors
+  that belong together? Consider whether a smaller interface would actually
+  hide that knowledge rather than merely moving it.
+- Are extracted helpers tested in isolation while the changed composition or
+  interaction between them remains untested? Check the observable behavior
+  through the appropriate interface, including real failure paths.
+- Use the deletion test from `refactoring.md` for a suspected shallow module:
+  distinguish complexity that disappears from complexity transferred to its
+  callers. Assess seams and adapters for real variation, not pattern labels.
+
+Use the project's glossary and relevant ADRs from the context capsule. Read
+surrounding code to understand the changed surface, but do not broaden the
+review into a repository-wide scan. Recommend a broader investigation only
+when the friction materially affects this change; follow the existing finding
+and mutation gates.
+
 The Map is an overview for the human reviewer, not a second findings list.
 Findings point into it; it never duplicates the `Finding Set`. Attach it to
 the `Evidence Pack` and embed it in the final report overview. For each

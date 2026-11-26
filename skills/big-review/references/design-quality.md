@@ -197,8 +197,20 @@ Reuse/duplication (Q1) and consistency/clarity (Q3) belong to
 mechanism-level evidence as any design risk: what the right layer would be,
 why this depth is wrong for it, and the trade-off of moving it.
 
+For the changed behavior, trace the relevant callers and tests: check whether a
+domain concept's rules are scattered across modules and whether callers must
+coordinate related invariants that could live behind a clearer interface.
+Distinguish genuine friction from appropriate separation of responsibilities.
+Apply the deletion test in `refactoring.md` where a module may be shallow.
+Keep the assessment diff-scoped and use the normal finding and mutation gates.
+
 Testability pre-check (apply to changed modules before judging depth):
 
-- **Accept dependencies, don't create them** — `processOrder(order, paymentGateway)` tests clean; `processOrder(order) { const gateway = new StripeGateway(); }` does not.
-- **Return results, don't produce side effects** — `calculateDiscount(cart): Discount` tests clean; `applyDiscount(cart): void { cart.total -= discount; }` does not.
-- **Small surface area** — fewer methods = fewer tests needed; fewer params = simpler setup. Ask the deepening questions: fewer methods? simpler params? more complexity hidden?
+- Consider accepting a dependency when constructing it internally hides a real
+  external interaction that callers or tests need to control. Do not introduce
+  an interface or injection point solely for a hypothetical variation.
+- Separate calculation from side effects when that makes important outcomes
+  easier to observe; keep necessary effects and their failure behavior tested.
+- Ask whether a smaller surface hides meaningful complexity without obscuring
+  the contract. Check changed behavior through the module's interface, including
+  composition between helpers, rather than relying solely on isolated tests.

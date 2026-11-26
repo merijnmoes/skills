@@ -218,7 +218,7 @@ Fan-out roster (all read-only, fresh-context, depth 1):
   existing behavior and developer workflows, unintended feature-gate leaks,
   and whether deliberate breakage is bounded by the pinned intent.
 - **Q1 reuse** (`references/codebase-fit.md`): existing helper to call, dead code, duplicates.
-- **Q2 altitude** (`references/design-quality.md`): bandaid vs right depth.
+- **Q2 altitude** (`references/design-quality.md`): bandaid vs right depth, including interface testability and composition.
 - **Q3 consistency** (`references/codebase-fit.md`, `references/universal-quality.md`): sibling guards, convention drift, naming.
 - **Q4 deep maintainability** (`references/refactoring.md`): challenge whether
   the changed implementation can remove meaningful complexity while preserving
