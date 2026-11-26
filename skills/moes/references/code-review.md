@@ -24,6 +24,15 @@ walk; do not re-walk another lane's territory:
   checklist for the diff's language (`==` coercion, falsy-value traps,
   loop-variable capture, mutable defaults, nil-map writes, SQL concatenation,
   DST arithmetic).
+- **C5 compatibility and gates**: trace the changed behavior through its
+  reachable callers and operating paths. Check for regressions in existing
+  functionality and developer workflows (build/run commands, environment
+  variables and secrets, ports/networking, and required setup steps), and
+  verify that internal-only behavior and feature-gated paths remain gated.
+  Treat intended breakage as intentional only when the pinned intent explicitly
+  calls for it and its scope is bounded; still report concrete, unacknowledged
+  downstream consequences. Keep this pass diff-scoped and route security
+  exploit paths through `security-review.md`.
 
 ## Rationalizations to reject
 - **"This pattern looks dangerous, so it must be a bug."** Pattern recognition
@@ -46,6 +55,23 @@ walk; do not re-walk another lane's territory:
 - **State & data** — incorrect mutation of shared/aliased objects, stale caches, broken invariants, lost updates. Treat defensive normalization or fallback defaults as suspect until the underlying invariant is proven: prefer one canonical source for a total and its breakdown, and flag normalization that makes the UI look safe while hiding a data or wiring defect.
 - **Type-boundary correctness** — unchecked casts, parse/serialize round-trip edges, numeric precision/overflow, implicit coercion.
 - **Dead / unreachable code** introduced by the change.
+
+## Compatibility and review-thread follow-through
+
+Do not stop at local correctness when a changed contract has callers,
+operations, or feature gates elsewhere. Trace the concrete path end to end,
+including same-branch changes, and verify any suspected client/server or
+library behavior in available source or current primary documentation before
+reporting it. Do not frame a purposeful, bounded behavior change as a bug; do
+flag a reachable consequence that exceeds the pinned intent or appears
+unacknowledged.
+
+After completing the independent audit, if this branch has a PR and the audit
+has medium-or-higher risk findings, inspect its review discussion. Validate and
+deduplicate relevant reviewer or automated findings against the code, then
+attribute any included finding to its source. Discussion is a lead, not proof;
+never let it bias the independent pass or substitute for reproducing the
+trigger.
 
 ## Output
 

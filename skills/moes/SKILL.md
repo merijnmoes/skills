@@ -215,9 +215,16 @@ Fan-out roster (all read-only, fresh-context, depth 1):
 - **C2 removed-behavior** (`references/code-review.md`): every deleted line names its invariant.
 - **C3 cross-file tracer** (`references/code-review.md`): callers and field read-sites.
 - **C4 language-pitfall**: checklist pattern-match for the diff's language.
+- **C5 compatibility and gates** (`references/code-review.md`): regressions to
+  existing behavior and developer workflows, unintended feature-gate leaks,
+  and whether deliberate breakage is bounded by the pinned intent.
 - **Q1 reuse** (`references/codebase-fit.md`): existing helper to call, dead code, duplicates.
 - **Q2 altitude** (`references/design-quality.md`): bandaid vs right depth.
 - **Q3 consistency** (`references/codebase-fit.md`, `references/universal-quality.md`): sibling guards, convention drift, naming.
+- **Q4 deep maintainability** (`references/refactoring.md`): challenge whether
+  the changed implementation can remove meaningful complexity while preserving
+  behavior; inspect branching, abstraction and type boundaries, file growth,
+  canonical ownership, and avoidable serialization or partial updates.
 - **S security** (`references/security-review.md`): owns threat-model, infra, and exploit-path routes.
 - **P performance** and **T test-coverage** lanes.
 - **U personas**: attacker, 3am-oncall, and maintainer passes in parallel.
@@ -284,7 +291,8 @@ Use the Phase-0 risk map and project context capsule to decide which conditional
   produced QA intent, Playwright/API tests, exploratory browser evidence, or a
   QA capability matrix.
 
-- **Code review:** dispatch a fresh-context subagent (per the `dispatching-parallel-agents` skill) to review the diff following `references/code-review.md`. Pass the diff plus the shared context packet defined above. Start with the fast sweep from `references/common-bugs-checklist.md` and `references/universal-quality.md`, then do the deeper correctness pass. On a host without subagents, follow those references as an inline adversarial pass using the same context packet.
+- **Code review:** dispatch a fresh-context subagent (per the `dispatching-parallel-agents` skill) to review the diff following `references/code-review.md`. Pass the diff plus the shared context packet defined above. Start with the fast sweep from `references/common-bugs-checklist.md` and `references/universal-quality.md`, then do the deeper correctness and compatibility passes. On a host without subagents, follow those references as an inline adversarial pass using the same context packet.
+- **Code quality review:** give Q4 a fresh-context, read-only pass over the changed code using `references/refactoring.md` and `references/universal-quality.md`. Q2 owns interface depth and design notes; Q4 challenges maintainability and simpler structural alternatives; structural regression reports concrete degradation caused by the diff. Deduplicate overlapping evidence into one finding. Require a `Covered:` receipt and normalized candidates like every other lane. This is the ambitious maintainability challenge, not permission to refactor during audit: findings remain diff-scoped and behavior-preserving, and fixes still require consolidation and the auto-fix contract.
 - **Security review:** dispatch a fresh-context subagent to audit the diff following `references/security-review.md`, using `references/security-cheat-sheets.md` as the canonical router for the conditional security surfaces. Pass the diff plus the shared context packet defined above. Inline-adversarial fallback as above. When migration, observability, or configuration surfaces are in play, this lane owns the security-specific findings for them; the separate operational lanes below own the non-security rollout/operability/behavior findings. Infra, GitHub Actions exploit-path, threat-model-escalation, and security-requirements routes stay under security-lane ownership: keep them visible in the specialty lane registry, but normalize their findings under the shared security lane rather than as standalone Phase-4 lanes. Use the threat-model route when a red-lane trust boundary changes or a high-impact security finding needs abuse-path framing before it can block.
 - **Delegation recovery:** dispatched audit subagents must behave per `../forge/references/delegation.md`. If a review subagent fails, times out, is cancelled, or never returns, do not wait on it indefinitely — run the same lane inline as an adversarial pass, or continue degraded with the partial result recorded. A missing lane is never a pass: it stays an explicit unexercised gap.
 - **Lane-completion gate:** give no verdict while any registered `run` lane is still pending, running, or never returned. A running or not-yet-returned lane means no READY TO SHIP. Record which lanes actually completed and which did not; a provisional judgement made before all lanes returned is not a verdict.
